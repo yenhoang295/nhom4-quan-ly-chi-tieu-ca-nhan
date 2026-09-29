@@ -1,4 +1,19 @@
-# CODEOWNERS
-# Người phụ trách review toàn bộ repository
+# Dev A = @yenhoang295 | Dev B = @khuatdanhthai117-bit | BA = @lethihuechi16-sen
+# Luật nào nằm sau thì được ưu tiên, nên dòng cụ thể phải đặt sau dòng *
 
-* @trinhngoctruc-oss
+# Mặc định: một trong hai dev review
+*                                           @yenhoang295 @khuatdanhthai117-bit
+
+# Vùng của Dev A -> Dev B review
+/src/main/java/com/nhom4/chitieu/expense/   @khuatdanhthai117-bit
+/src/test/java/com/nhom4/chitieu/expense/   @khuatdanhthai117-bit
+/docs/dev-a/                                @khuatdanhthai117-bit
+
+# Vùng của Dev B -> Dev A review
+/src/main/java/com/nhom4/chitieu/budget/    @yenhoang295
+/src/test/java/com/nhom4/chitieu/budget/    @yenhoang295
+/docs/dev-b/                                @yenhoang295
+
+# Vùng của BA -> hai dev review
+/docs/ba/                                   @yenhoang295 @khuatdanhthai117-bit
+/db/                                        @yenhoang295 @khuatdanhthai117-bit
