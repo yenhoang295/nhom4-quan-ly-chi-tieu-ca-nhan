@@ -1,0 +1,14 @@
+name: CI
+on:
+  pull_request: { branches: [main] }
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Lấy mã nguồn
+        uses: actions/checkout@v4
+      - name: Cài đặt Java
+        uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 21, cache: maven }
+      - name: Chạy kiểm thử Maven
+        run: mvn -B verify
