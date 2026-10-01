@@ -23,4 +23,12 @@ class BudgetManager:
 
     def get_budget(self):
         return self.monthly_budget
+    def is_budget_exceeded(self, expenses_list):
+        total_expense = 0
+        for exp in expenses_list:
+            total_expense += exp.get("amount", 0)
+
+        if total_expense > self.monthly_budget:
+            return True
+        return False
 
