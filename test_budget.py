@@ -28,4 +28,17 @@ def test_set_monthly_budget_valid():
 def test_set_monthly_budget_invalid():
     manager = BudgetManager()
     assert manager.set_budget(-1000) is False  # Ngân sách không được âm
+def test_is_budget_exceeded_true():
+    manager = BudgetManager()
+    manager.set_budget(100000)  # Ngân sách 100k
+    # Tổng chi tiêu là 120k -> Vượt ngân sách
+    mock_expenses = [{"amount": 70000}, {"amount": 50000}]
+    assert manager.is_budget_exceeded(mock_expenses) is True
+
+def test_is_budget_exceeded_false():
+    manager = BudgetManager()
+    manager.set_budget(100000)  # Ngân sách 100k
+    # Tổng chi tiêu là 80k -> Chưa vượt ngân sách
+    mock_expenses = [{"amount": 50000}, {"amount": 30000}]
+    assert manager.is_budget_exceeded(mock_expenses) is False
 
