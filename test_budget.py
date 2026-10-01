@@ -20,4 +20,12 @@ def test_add_duplicate_category():
     ]
     assert manager.get_total_by_category("Ăn uống", mock_expenses) == 80000
     assert manager.get_total_by_category("Mua sắm", mock_expenses) == 0
+def test_set_monthly_budget_valid():
+    manager = BudgetManager()
+    assert manager.set_budget(5000000) is True
+    assert manager.get_budget() == 5000000
+
+def test_set_monthly_budget_invalid():
+    manager = BudgetManager()
+    assert manager.set_budget(-1000) is False  # Ngân sách không được âm
 
