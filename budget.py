@@ -10,10 +10,7 @@ class BudgetManager:
 
     def get_categories(self):
        return self.categories
-            def get_total_by_category(self, category_name, expenses_list):
-        total = 0
-        for exp in expenses_list:
-            if exp.get("category") == category_name:
-                total += exp.get("amount", 0)
-        return total
+    def get_total_by_category(self, category_name, expenses_list):
+        return sum(exp.get("amount", 0) for exp in expenses_list if exp.get("category") == category_name)
+
 
