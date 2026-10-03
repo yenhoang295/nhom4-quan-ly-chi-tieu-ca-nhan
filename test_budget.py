@@ -41,4 +41,16 @@ def test_is_budget_exceeded_false():
     # Tổng chi tiêu là 80k -> Chưa vượt ngân sách
     mock_expenses = [{"amount": 50000}, {"amount": 30000}]
     assert manager.is_budget_exceeded(mock_expenses) is False
+def test_get_monthly_statistics():
+    manager = BudgetManager()
+    # Giả lập danh sách chi tiêu của các tháng khác nhau
+    mock_expenses = [
+        {"amount": 50000, "date": "2026-10-01"},
+        {"amount": 30000, "date": "2026-10-15"},
+        {"amount": 40000, "date": "2026-09-20"}
+    ]
+    # Thống kê tháng 10/2026 phải bằng 80k
+    assert manager.get_monthly_statistics("2026-10", mock_expenses) == 80000
+    # Thống kê tháng không có dữ liệu phải bằng 0
+    assert manager.get_monthly_statistics("2026-08", mock_expenses) == 0
 
