@@ -53,4 +53,19 @@ def test_get_monthly_statistics():
     assert manager.get_monthly_statistics("2026-10", mock_expenses) == 80000
     # Thống kê tháng không có dữ liệu phải bằng 0
     assert manager.get_monthly_statistics("2026-08", mock_expenses) == 0
+def test_get_top_spending_category():
+    manager = BudgetManager()
+    mock_expenses = [
+        {"amount": 50000, "category": "Ăn uống"},
+        {"amount": 40000, "category": "Ăn uống"},
+        {"amount": 150000, "category": "Mua sắm"},
+        {"amount": 30000, "category": "Di chuyển"}
+    ]
+    # Danh mục chi nhiều nhất phải là Mua sắm (150k), còn Ăn uống chỉ có 90k
+    assert manager.get_top_spending_category(mock_expenses) == "Mua sắm"
+
+def test_get_top_spending_category_empty():
+    manager = BudgetManager()
+    # Nếu không có chi tiêu nào thì trả về None
+    assert manager.get_top_spending_category([]) is None
 
