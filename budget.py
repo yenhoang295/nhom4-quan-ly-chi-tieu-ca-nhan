@@ -28,4 +28,8 @@ class BudgetManager:
         total_expense = sum(exp.get("amount", 0) for exp in expenses_list)
         return total_expense > self.monthly_budget
 
+    # HÀM MỚI CHO NGÀY 7 ĐỂ ĐẠT GREEN
+    def get_monthly_statistics(self, year_month, expenses_list):
+        return sum(exp.get("amount", 0) for exp in expenses_list if exp.get("date", "").startswith(year_month))
+
 
