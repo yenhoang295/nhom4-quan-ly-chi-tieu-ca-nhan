@@ -68,4 +68,15 @@ def test_get_top_spending_category_empty():
     manager = BudgetManager()
     # Nếu không có chi tiêu nào thì trả về None
     assert manager.get_top_spending_category([]) is None
+def test_compare_two_months():
+    manager = BudgetManager()
+    mock_expenses = [
+        {"amount": 50000, "date": "2026-10-01"},
+        {"amount": 30000, "date": "2026-10-15"},
+        {"amount": 40000, "date": "2026-09-20"}
+    ]
+    # Tháng 10 (80k) so với Tháng 9 (40k) -> Chênh lệch là 40k
+    assert manager.compare_months("2026-10", "2026-09", mock_expenses) == 40000
+    # Tháng 9 (40k) so với Tháng 10 (80k) -> Chênh lệch là -40k
+    assert manager.compare_months("2026-09", "2026-10", mock_expenses) == -40000
 
