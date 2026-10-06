@@ -31,20 +31,23 @@ class BudgetManager:
     def get_monthly_statistics(self, year_month, expenses_list):
         return sum(exp.get("amount", 0) for exp in expenses_list if exp.get("date", "").startswith(year_month))
 
-    # HÀM TÌM DANH MỤC CHI NHIỀU NHẤT (BƯỚC GREEN)
     def get_top_spending_category(self, expenses_list):
         if not expenses_list:
             return None
-
         totals = {}
         for exp in expenses_list:
             cat = exp.get("category")
             if cat:
                 totals[cat] = totals.get(cat, 0) + exp.get("amount", 0)
-
         if not totals:
             return None
-
         return max(totals, key=totals.get)
+
+    # HÀM MỚI CHO NGÀY 8 ĐỂ ĐẠT GREEN
+    def compare_months(self, month1, month2, expenses_list):
+        total_m1 = self.get_monthly_statistics(month1, expenses_list)
+        total_m2 = self.get_monthly_statistics(month2, expenses_list)
+        return total_m1 - total_m2
+
 
 
