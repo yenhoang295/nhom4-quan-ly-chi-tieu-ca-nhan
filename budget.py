@@ -1,4 +1,6 @@
 class BudgetManager:
+    """Quản lý danh mục và ngân sách chi tiêu đạt chuẩn TDD."""
+
     def __init__(self):
         self.categories = []
         self.monthly_budget = 0
@@ -29,25 +31,24 @@ class BudgetManager:
         return total_expense > self.monthly_budget
 
     def get_monthly_statistics(self, year_month, expenses_list):
-        return sum(exp.get("amount", 0) for exp in expenses_list if exp.get("date", "").startswith(year_month))
+        if not year_month or not expenses_list:
+            return 0
+        return sum(exp.get("amount", 0) for exp in expenses_list if str(exp.get("date", "")).startswith(year_month))
 
     def get_top_spending_category(self, expenses_list):
         if not expenses_list:
             return None
+
         totals = {}
         for exp in expenses_list:
             cat = exp.get("category")
             if cat:
                 totals[cat] = totals.get(cat, 0) + exp.get("amount", 0)
-        if not totals:
-            return None
-        return max(totals, key=totals.get)
 
-    # HÀM MỚI CHO NGÀY 8 ĐỂ ĐẠT GREEN
+        return max(totals, key=totals.get) if totals else None
+
     def compare_months(self, month1, month2, expenses_list):
-        total_m1 = self.get_monthly_statistics(month1, expenses_list)
-        total_m2 = self.get_monthly_statistics(month2, expenses_list)
-        return total_m1 - total_m2
+        return self.get_monthly_statistics(month1, expenses_list) - self.get_monthly_statistics(month2, expenses_list)
 
 
 
