@@ -79,4 +79,14 @@ def test_compare_two_months():
     assert manager.compare_months("2026-10", "2026-09", mock_expenses) == 40000
     # Tháng 9 (40k) so với Tháng 10 (80k) -> Chênh lệch là -40k
     assert manager.compare_months("2026-09", "2026-10", mock_expenses) == -40000
+def test_edge_cases_budget_zero():
+    manager = BudgetManager()
+    # Kiểm tra khi đặt ngân sách bằng 0
+    assert manager.set_budget(0) is True
+    assert manager.get_budget() == 0
+
+def test_edge_cases_no_data_month():
+    manager = BudgetManager()
+    # Kiểm tra thống kê tháng khi danh sách chi tiêu trống rỗng
+    assert manager.get_monthly_statistics("2026-12", []) == 0
 
