@@ -10,10 +10,10 @@ public class ExpenseService {
     }
 
     public Expense add(LocalDate date, long amount, int categoryId, String note) {
-        throw new UnsupportedOperationException("chưa làm");
+        return repository.save(new Expense(0, date, amount, categoryId, note));
     }
 
     public long total() {
-        throw new UnsupportedOperationException("chưa làm");
+        return repository.findAll().stream().mapToLong(Expense::amount).sum();
     }
 }
