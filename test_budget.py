@@ -41,4 +41,52 @@ def test_is_budget_exceeded_false():
     # Tổng chi tiêu là 80k -> Chưa vượt ngân sách
     mock_expenses = [{"amount": 50000}, {"amount": 30000}]
     assert manager.is_budget_exceeded(mock_expenses) is False
+def test_get_monthly_statistics():
+    manager = BudgetManager()
+    # Giả lập danh sách chi tiêu của các tháng khác nhau
+    mock_expenses = [
+        {"amount": 50000, "date": "2026-10-01"},
+        {"amount": 30000, "date": "2026-10-15"},
+        {"amount": 40000, "date": "2026-09-20"}
+    ]
+    # Thống kê tháng 10/2026 phải bằng 80k
+    assert manager.get_monthly_statistics("2026-10", mock_expenses) == 80000
+    # Thống kê tháng không có dữ liệu phải bằng 0
+    assert manager.get_monthly_statistics("2026-08", mock_expenses) == 0
+def test_get_top_spending_category():
+    manager = BudgetManager()
+    mock_expenses = [
+        {"amount": 50000, "category": "Ăn uống"},
+        {"amount": 40000, "category": "Ăn uống"},
+        {"amount": 150000, "category": "Mua sắm"},
+        {"amount": 30000, "category": "Di chuyển"}
+    ]
+    # Danh mục chi nhiều nhất phải là Mua sắm (150k), còn Ăn uống chỉ có 90k
+    assert manager.get_top_spending_category(mock_expenses) == "Mua sắm"
+
+def test_get_top_spending_category_empty():
+    manager = BudgetManager()
+    # Nếu không có chi tiêu nào thì trả về None
+    assert manager.get_top_spending_category([]) is None
+def test_compare_two_months():
+    manager = BudgetManager()
+    mock_expenses = [
+        {"amount": 50000, "date": "2026-10-01"},
+        {"amount": 30000, "date": "2026-10-15"},
+        {"amount": 40000, "date": "2026-09-20"}
+    ]
+    # Tháng 10 (80k) so với Tháng 9 (40k) -> Chênh lệch là 40k
+    assert manager.compare_months("2026-10", "2026-09", mock_expenses) == 40000
+    # Tháng 9 (40k) so với Tháng 10 (80k) -> Chênh lệch là -40k
+    assert manager.compare_months("2026-09", "2026-10", mock_expenses) == -40000
+def test_edge_cases_budget_zero():
+    manager = BudgetManager()
+    # Kiểm tra khi đặt ngân sách bằng 0
+    assert manager.set_budget(0) is True
+    assert manager.get_budget() == 0
+
+def test_edge_cases_no_data_month():
+    manager = BudgetManager()
+    # Kiểm tra thống kê tháng khi danh sách chi tiêu trống rỗng
+    assert manager.get_monthly_statistics("2026-12", []) == 0
 
