@@ -16,4 +16,8 @@ public class ExpenseService {
     public long total() {
         return repository.findAll().stream().mapToLong(Expense::amount).sum();
     }
+
+    public void delete(int id) {
+        throw new UnsupportedOperationException("chưa làm");
+    }
 }

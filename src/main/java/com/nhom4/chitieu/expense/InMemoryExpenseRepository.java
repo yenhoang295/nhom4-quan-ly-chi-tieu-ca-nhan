@@ -19,4 +19,9 @@ public class InMemoryExpenseRepository implements ExpenseRepository {
     public List<Expense> findAll() {
         return List.copyOf(data);
     }
+
+    @Override
+    public boolean deleteById(int id) {
+        return data.removeIf(e -> e.id() == id);
+    }
 }
