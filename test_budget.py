@@ -89,4 +89,21 @@ def test_edge_cases_no_data_month():
     manager = BudgetManager()
     # Kiểm tra thống kê tháng khi danh sách chi tiêu trống rỗng
     assert manager.get_monthly_statistics("2026-12", []) == 0
+def test_add_category_empty():
+    manager = BudgetManager()
+    # Test trường hợp tên danh mục rỗng
+    assert manager.add_category("") is False
+    assert manager.add_category(None) is False
+
+def test_get_monthly_statistics_invalid_input():
+    manager = BudgetManager()
+    # Test trường hợp truyền tháng rỗng hoặc danh sách trống
+    assert manager.get_monthly_statistics("", [{"amount": 1000, "date": "2026-10-01"}]) == 0
+    assert manager.get_monthly_statistics("2026-10", None) == 0
+
+def test_get_top_spending_category_no_valid_cat():
+    manager = BudgetManager()
+    # Test trường hợp danh sách chi tiêu không có trường 'category'
+    mock_expenses = [{"amount": 50000}, {"amount": 40000}]
+    assert manager.get_top_spending_category(mock_expenses) is None
 
