@@ -1,6 +1,7 @@
 package com.nhom4.chitieu.expense;
 
 import java.time.LocalDate;
+import java.util.NoSuchElementException;
 
 public class ExpenseService {
     private final ExpenseRepository repository;
@@ -18,6 +19,8 @@ public class ExpenseService {
     }
 
     public void delete(int id) {
-        throw new UnsupportedOperationException("chưa làm");
+        if (!repository.deleteById(id)) {
+            throw new NoSuchElementException("Không tìm thấy khoản chi có mã " + id);
+        }
     }
 }
