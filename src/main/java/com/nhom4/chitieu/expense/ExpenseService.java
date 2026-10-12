@@ -1,6 +1,7 @@
 package com.nhom4.chitieu.expense;
 
 import java.time.LocalDate;
+import java.util.NoSuchElementException;
 
 public class ExpenseService {
     private final ExpenseRepository repository;
@@ -15,5 +16,11 @@ public class ExpenseService {
 
     public long total() {
         return repository.findAll().stream().mapToLong(Expense::amount).sum();
+    }
+
+    public void delete(int id) {
+        if (!repository.deleteById(id)) {
+            throw new NoSuchElementException("Không tìm thấy khoản chi có mã " + id);
+        }
     }
 }

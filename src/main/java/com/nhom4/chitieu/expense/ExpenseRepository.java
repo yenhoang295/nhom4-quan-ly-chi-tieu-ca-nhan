@@ -6,4 +6,6 @@ public interface ExpenseRepository {
     Expense save(Expense expense);
 
     List<Expense> findAll();
+
+    boolean deleteById(int id);
 }
