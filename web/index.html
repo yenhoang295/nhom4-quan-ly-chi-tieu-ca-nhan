@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sổ chi tiêu cá nhân - Nhóm 4</title>
+  <meta name="description" content="Ghi lại các khoản chi hằng ngày, xem tổng chi theo tháng và theo danh mục.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="wrap">
+    <header class="top">
+      <h1>Sổ chi tiêu cá nhân</h1>
+      <div class="month-picker">
+        <label for="month">Xem tháng</label>
+        <input type="month" id="month" required>
+      </div>
+    </header>
+
+    <noscript><p class="banner">Trang này cần bật JavaScript để hoạt động.</p></noscript>
+    <p id="banner" class="banner" role="alert" hidden></p>
+
+    <section class="hero" aria-labelledby="heroLabel">
+      <p id="heroLabel" class="hero-label">Đã chi trong tháng</p>
+      <p id="total" class="hero-total" aria-live="polite">0 ₫</p>
+      <p id="count" class="hero-sub"></p>
+      <div id="splitBar" class="split-bar" role="img" aria-label="Tỷ lệ chi theo danh mục"></div>
+      <ul id="legend" class="legend"></ul>
+    </section>
+
+    <div class="columns">
+      <aside class="side">
+        <section class="panel" aria-labelledby="addTitle">
+          <h2 id="addTitle">Thêm khoản chi</h2>
+          <form id="expenseForm" novalidate>
+            <div class="field">
+              <label for="spentOn">Ngày chi</label>
+              <input type="date" id="spentOn" required aria-describedby="spentOnError">
+              <p class="field-error" id="spentOnError"></p>
+            </div>
+            <div class="field">
+              <label for="amount">Số tiền (₫)</label>
+              <input type="text" id="amount" inputmode="numeric" autocomplete="off" placeholder="Ví dụ: 50000" required aria-describedby="amountError">
+              <p class="field-error" id="amountError"></p>
+            </div>
+            <div class="field">
+              <label for="categoryId">Danh mục</label>
+              <select id="categoryId" required aria-describedby="categoryIdError"></select>
+              <p class="field-error" id="categoryIdError"></p>
+            </div>
+            <div class="field">
+              <label for="note">Ghi chú (không bắt buộc)</label>
+              <input type="text" id="note" maxlength="255" autocomplete="off" placeholder="Ví dụ: Cơm trưa cùng nhóm">
+            </div>
+            <button type="submit" class="btn" id="expenseBtn">Lưu khoản chi</button>
+          </form>
+        </section>
+
+        <section class="panel" aria-labelledby="catTitle">
+          <h2 id="catTitle">Tạo danh mục</h2>
+          <form id="categoryForm" novalidate>
+            <div class="field">
+              <label for="catName">Tên danh mục</label>
+              <input type="text" id="catName" maxlength="100" autocomplete="off" placeholder="Ví dụ: Du lịch" required aria-describedby="catNameError">
+              <p class="field-error" id="catNameError"></p>
+            </div>
+            <button type="submit" class="btn btn-outline" id="catBtn">Tạo danh mục</button>
+          </form>
+        </section>
+      </aside>
+
+      <section class="panel list" aria-labelledby="listTitle">
+        <div class="list-head">
+          <h2 id="listTitle">Các khoản chi</h2>
+          <div class="filter">
+            <label for="filterCategory">Lọc theo danh mục</label>
+            <select id="filterCategory"></select>
+          </div>
+        </div>
+        <ul id="rows" class="rows"></ul>
+        <p id="empty" class="empty" hidden></p>
+      </section>
+    </div>
+
+    <footer class="foot">
+      <p>Nhóm 4, đề tài 43: quản lý chi tiêu cá nhân. Dữ liệu lưu trên Supabase.</p>
+    </footer>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
