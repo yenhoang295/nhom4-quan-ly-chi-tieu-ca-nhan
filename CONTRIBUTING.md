@@ -37,3 +37,24 @@ Scope: expense, budget, category, statistics, db, ba, dev-a, dev-b.
 
 ## Không commit
 `.env`, mật khẩu (`db.properties`), thư mục `target/`.
+
+## Kiểm thử của BA
+1. Với mỗi Pull Request của Dev: `git fetch origin`, `git switch <tên-nhánh>`, chạy kiểm thử của dự án (khung Maven hiện tại: `mvn verify`), đối chiếu `docs/ba/test-cases.md`.
+2. Kết quả ghi bằng bình luận trong PR: đạt thì viết "Đã test OK"; lỗi thì ghi cách tái hiện và tạo Issue `bugfix`.
+3. Tick ô "BA đã test" trong mô tả PR chỉ khi đã bình luận "Đã test OK".
+
+## Tài liệu BA
+- Nằm ở `docs/ba/` (yêu cầu, use case, tiêu chí chấp nhận, `database.md`, `test-cases.md`, báo cáo, nhật ký) và `db/` (`schema.sql`, `seed.sql`).
+- Cả hai Dev review PR tài liệu BA (xem `.github/CODEOWNERS`).
+- Cứ 2 ngày làm việc mở một PR tài liệu; mỗi ngày có ít nhất một commit nhật ký.
+
+## Cơ sở dữ liệu (Supabase) và web (Vercel)
+- Cơ sở dữ liệu là PostgreSQL trên Supabase. Thay đổi cấu trúc bảng đi qua PR sửa `db/schema.sql`, ghi rõ trong mô tả PR; sau khi merge, chạy lại file trong Supabase → SQL Editor.
+- Vercel tự deploy khi merge vào `main`. Mở tab **Deployments** kiểm tra sau mỗi lần merge.
+- Tài khoản Supabase và Vercel đăng nhập bằng GitHub.
+
+## Bảo mật
+- Không commit: khóa API, mật khẩu cơ sở dữ liệu, `.env*`, `db.properties`, thư mục `.vercel/`.
+- Khóa `service_role` của Supabase chỉ đặt trong biến môi trường của Vercel, tuyệt đối không đưa vào mã chạy trên trình duyệt.
+- Lỡ đưa khóa lên GitHub: đổi khóa trong Supabase ngay, không chỉ xóa file.
+- Không chụp màn hình hiện khóa API hay mật khẩu khi làm minh chứng.
