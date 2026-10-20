@@ -6,38 +6,40 @@
     <title>Quản Lý Thu Nhập Cá Nhân</title>
     <link href="https://jsdelivr.net" rel="stylesheet">
     <link href="https://cloudflare.com" rel="stylesheet">
+    <!-- Nhúng thư viện Supabase chính thức từ CDN đạt chuẩn hệ thống hiện đại -->
+    <script src="https://jsdelivr.net"></script>
 </head>
 <body class="bg-light">
     <div class="container py-5">
         <div class="row mb-4">
             <div class="col-md-12 d-flex justify-content-between align-items-center">
-                <h2 class="text-primary"><i class="fas fa-wallet me-2"></i>Quản Lý Thu Nhập Cá Nhân</h2>
+                <h2 class="text-primary"><i class="fas fa-wallet me-2"></i>Quản Lý Thu Nhập Cá Nhân (Dữ liệu thật)</h2>
                 <a href="gia-dinh-quan-tri.html" class="btn btn-outline-secondary"><i class="fas fa-users-cog me-2"></i>Trang Quản Trị Của Mẹ</a>
             </div>
         </div>
 
-        <!-- Thống kê tổng quan -->
+        <!-- Thống kê tổng quan từ Database -->
         <div class="row mb-4">
-            <div class="col-md-4">
+            <div class="col-md-4 mb-3">
                 <div class="card bg-success text-white shadow-sm border-0">
                     <div class="card-body">
-                        <h6 class="card-title text-uppercase opacity-75 small">Tổng Thu Nhập</h6>
+                        <h6 class="card-title text-uppercase opacity-75 small">Tổng Thu Nhập Thật</h6>
                         <h3 class="card-text fw-bold" id="total-income">0đ</h3>
                     </div>
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-4 mb-3">
                 <div class="card bg-danger text-white shadow-sm border-0">
                     <div class="card-body">
-                        <h6 class="card-title text-uppercase opacity-75 small">Tổng Chi Tiêu (Giả lập)</h6>
-                        <h3 class="card-text fw-bold" id="total-expense">450,000đ</h3>
+                        <h6 class="card-title text-uppercase opacity-75 small">Tổng Chi Tiêu Thật</h6>
+                        <h3 class="card-text fw-bold" id="total-expense">0đ</h3>
                     </div>
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-4 mb-3">
                 <div class="card shadow-sm border-0" id="balance-card">
                     <div class="card-body">
-                        <h6 class="card-title text-uppercase text-secondary small">Cân Đối Thu Chi</h6>
+                        <h6 class="card-title text-uppercase text-secondary small">Cân Đối Thu Chi (Thu - Chi)</h6>
                         <h3 class="card-text fw-bold" id="balance-amount">0đ</h3>
                     </div>
                 </div>
@@ -45,7 +47,7 @@
         </div>
 
         <div class="row">
-            <!-- Form Thêm Thu Nhập -->
+            <!-- Form Thêm Thu Nhập Real-time -->
             <div class="col-md-4 mb-4">
                 <div class="card shadow-sm border-0">
                     <div class="card-header bg-primary text-white py-3">
@@ -55,19 +57,21 @@
                         <form id="income-form">
                             <div class="mb-3">
                                 <label class="form-label small fw-bold">Nguồn Thu Nhập</label>
-                                <input type="text" id="income-source" class="form-control" placeholder="Ví dụ: Lương tháng, Thưởng" required>
+                                <input type="text" id="income-source" class="form-control" placeholder="Ví dụ: Lương tháng, Freelance" required>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label small fw-bold">Số Tiền (VND)</label>
                                 <input type="number" id="income-amount" class="form-control" min="1000" placeholder="Nhập số tiền" required>
                             </div>
-                            <button type="submit" class="btn btn-primary w-100 py-2"><i class="fas fa-save me-2"></i>Lưu Khoản Thu</button>
+                            <button type="submit" class="btn btn-primary w-100 py-2" id="btn-submit">
+                                <i class="fas fa-save me-2"></i>Lưu Khoản Thu
+                            </button>
                         </form>
                     </div>
                 </div>
             </div>
 
-            <!-- Danh Sách Thu Nhập -->
+            <!-- Danh Sách Thu Nhập Thực Tế Từ Table incomes -->
             <div class="col-md-8">
                 <div class="card shadow-sm border-0">
                     <div class="card-header bg-white py-3">
@@ -83,7 +87,11 @@
                                         <th class="text-end pe-4">Thao tác</th>
                                     </tr>
                                 </thead>
-                                <tbody id="income-list"></tbody>
+                                <tbody id="income-list">
+                                    <tr>
+                                        <td colspan="3" class="text-center py-4 text-secondary">Đang kết nối cơ sở dữ liệu...</td>
+                                    </tr>
+                                </tbody>
                             </table>
                         </div>
                     </div>
@@ -92,64 +100,134 @@
         </div>
     </div>
 
+    <!-- Nhúng file auth.js dùng chung cấu hình của Dev A -->
+    <script src="auth.js"></script>
     <script>
-        // Ngày 1: Sử dụng Dữ liệu giả lập (Mock Data) theo yêu cầu kế hoạch
-        let mockIncomes = [
-            { id: 1, source: "Lương cố định", amount: 15000000 },
-            { id: 2, source: "Tiền thưởng dự án", amount: 2000000 }
-        ];
-        const mockExpenseTotal = 450000;
+        // Sử dụng đối tượng supabase đã được khởi tạo từ file auth.js dùng chung
+        // Đảm bảo không làm hỏng web thầy đang xem theo đúng nguyên tắc dự án
+        
+        async function checkUserAuthentication() {
+            // Guard Clause: Kiểm tra phiên đăng nhập thực tế của người dùng
+            const { data: { user }, error } = await supabase.auth.getUser();
+            if (error || !user) {
+                // Nếu chưa đăng nhập thật, điều hướng an toàn về trang chủ theo đúng quy tắc thiết kế
+                window.location.href = "index.html"; 
+                return null;
+            }
+            return user;
+        }
 
-        function renderIncomeData() {
+        async function loadRealtimeFinancialData() {
+            const user = await checkUserAuthentication();
+            if (!user) return;
+
+            // 1. Fetch danh sách thu nhập thật thuộc về cá nhân (user_id) từ bảng incomes
+            const { data: incomes, error: incomeError } = await supabase
+                .from('incomes')
+                .select('*')
+                .eq('user_id', user.id)
+                .order('created_at', { ascending: false });
+
+            if (incomeError) {
+                console.error("Lỗi lấy dữ liệu table incomes:", incomeError.message);
+                return;
+            }
+
+            // 2. Fetch danh sách chi tiêu thật thuộc về cá nhân từ bảng expenses (được bổ sung thêm cột expenses.user_id)
+            const { data: expenses, error: expenseError } = await supabase
+                .from('expenses')
+                .select('amount')
+                .eq('user_id', user.id);
+
+            if (expenseError) {
+                console.error("Lỗi lấy dữ liệu table expenses:", expenseError.message);
+                return;
+            }
+
+            // 3. Tính toán tổng số liệu thật
+            const totalIncome = incomes ? incomes.reduce((sum, item) => sum + item.amount, 0) : 0;
+            const totalExpense = expenses ? expenses.reduce((sum, item) => sum + item.amount, 0) : 0;
+
+            renderDataToUI(incomes, totalIncome, totalExpense);
+        }
+
+        function renderDataToUI(incomes, totalIncome, totalExpense) {
             const listContainer = document.getElementById("income-list");
-            let totalIncome = 0;
             listContainer.innerHTML = "";
 
-            mockIncomes.forEach(item => {
-                totalIncome += item.amount;
-                listContainer.innerHTML += `
-                    <tr>
-                        <td class="ps-4 fw-medium">${item.source}</td>
-                        <td class="text-success fw-bold">${item.amount.toLocaleString()}đ</td>
-                        <td class="text-end pe-4">
-                            <button class="btn btn-sm btn-outline-danger" onclick="deleteIncome(${item.id})">
-                                <i class="fas fa-trash-alt"></i>
-                            </button>
-                        </td>
-                    </tr>`;
-            });
+            if (incomes.length === 0) {
+                listContainer.innerHTML = `<tr><td colspan="3" class="text-center py-4 text-secondary">Bạn chưa có khoản thu nhập nào trong hệ thống.</td></tr>`;
+            } else {
+                incomes.forEach(item => {
+                    listContainer.innerHTML += `
+                        <tr>
+                            <td class="ps-4 fw-medium">${item.source}</td>
+                            <td class="text-success fw-bold">${item.amount.toLocaleString()}đ</td>
+                            <td class="text-end pe-4">
+                                <button class="btn btn-sm btn-outline-danger" onclick="executeDeleteIncome('${item.id}')">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </td>
+                        </tr>`;
+                });
+            }
 
+            // Hiển thị số liệu lên các thẻ tổng quan
             document.getElementById("total-income").innerText = totalIncome.toLocaleString() + "đ";
-            const balance = totalIncome - mockExpenseTotal;
+            document.getElementById("total-expense").innerText = totalExpense.toLocaleString() + "đ";
+            
+            const balance = totalIncome - totalExpense;
             const balanceAmountNode = document.getElementById("balance-amount");
             const balanceCardNode = document.getElementById("balance-card");
             
-            balanceAmountNode.innerText = balance.toLocaleString() + "đ";
+            balanceAmountNode.innerText = (balance >= 0 ? "+" : "") + balance.toLocaleString() + "đ";
             if (balance >= 0) {
                 balanceAmountNode.className = "card-text text-success fw-bold";
-                balanceCardNode.className = "card shadow-sm border-start border-success border-4";
+                balanceCardNode.className = "card shadow-sm border-0 border-start border-success border-4";
             } else {
                 balanceAmountNode.className = "card-text text-danger fw-bold";
-                balanceCardNode.className = "card shadow-sm border-start border-danger border-4";
+                balanceCardNode.className = "card shadow-sm border-0 border-start border-danger border-4";
             }
         }
 
-        document.getElementById("income-form").addEventListener("submit", function(e) {
+        // Đăng ký sự kiện submit form thêm thu nhập thật vào Supabase
+        document.getElementById("income-form").addEventListener("submit", async function(e) {
             e.preventDefault();
-            const source = document.getElementById("income-source").value;
-            const amount = parseInt(document.getElementById("income-amount").value);
+            const btnSubmit = document.getElementById("btn-submit");
+            btnSubmit.disabled = true; // Chặn đúp chuột liên tục tạo dữ liệu rác
             
-            mockIncomes.push({ id: Date.now(), source: source, amount: amount });
-            document.getElementById("income-form").reset();
-            renderIncomeData();
-        });
+            try {
+                const user = await checkUserAuthentication();
+if (!user) return;
+const source = document.getElementById("income-source").value;
+const amount = parseInt(document.getElementById("income-amount").value);
+const { error } = await supabase
+.from('incomes')
+.insert([{ source: source, amount: amount, user_id: user.id }]);
+if (error) throw error;
+document.getElementById("income-form").reset();
+await loadRealtimeFinancialData();
+} catch (err) {
+alert("Lỗi lưu dữ liệu: " + err.message);
+} finally {
+btnSubmit.disabled = false;
+}
+});
+// Hàm xóa khoản thu nhập thật ra khỏi cơ sở dữ liệu
+async function executeDeleteIncome(id) {
+if (confirm("Bạn có chắc chắn muốn xóa khoản thu nhập này khỏi hệ thống không?")) {
+try {
+const { error } = await supabase
+.from('incomes')
+.delete()
+.eq('id', id);
+if (error) throw error;
+await loadRealtimeFinancialData();
+} catch (err) {
+alert("Lỗi xóa dữ liệu: " + err.message);
+}
+}
+}
+// Khởi chạy ứng dụng và lắng nghe sự kiện từ trang web
+document.addEventListener("DOMContentLoaded", loadRealtimeFinancialData);
 
-        function deleteIncome(id) {
-            mockIncomes = mockIncomes.filter(item => item.id !== id);
-            renderIncomeData();
-        }
-
-        window.onload = renderIncomeData;
-    </script>
-</body>
-</html>
