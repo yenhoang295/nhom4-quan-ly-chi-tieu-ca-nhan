@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bảng Quản Trị Tài Chính Gia Đình - Quyền Admin của Mẹ</title>
+    <link href="https://jsdelivr.net" rel="stylesheet">
+    <link href="https://cloudflare.com" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container py-5">
+        <div class="row mb-4">
+            <div class="col-md-12 d-flex justify-content-between align-items-center">
+                <h2 class="text-dark fw-bold"><i class="fas fa-users-cog text-primary me-2"></i>Bảng Quản Trị Gia Đình</h2>
+                <a href="thu-nhap.html" class="btn btn-primary"><i class="fas fa-arrow-left me-2"></i>Quay lại Thu Nhập Cá Nhân</a>
+            </div>
+        </div>
+
+        <!-- Khối thông báo trạng thái phân quyền -->
+        <div class="alert alert-warning d-flex align-items-center shadow-sm mb-4" role="alert">
+            <i class="fas fa-info-circle me-3 fs-4 text-warning"></i>
+            <div>
+                <strong>Chế độ mô phỏng (Mock Data):</strong> Toàn bộ thông tin tài chính của các thành viên được bảo mật nghiêm ngặt. Theo quy tắc quyền, chỉ tài khoản Admin (Mẹ) mới có thể đọc dữ liệu tổng hợp này.
+            </div>
+        </div>
+
+        <!-- Khối phân tích thông minh -->
+        <div class="row mb-4">
+            <div class="col-md-6 mb-3">
+                <div class="card border-0 shadow-sm text-white" style="background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);">
+                    <div class="card-body py-4">
+                        <h6 class="text-uppercase opacity-75 mb-2 small">Thành viên chi tiêu nhiều nhất</h6>
+                        <h2 class="fw-bold mb-0" id="top-spender">Đang tính toán...</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <div class="card border-0 shadow-sm text-white" style="background: linear-gradient(135deg, #1cc88a 0%, #13855c 100%);">
+                    <div class="card-body py-4">
+                        <h6 class="text-uppercase opacity-75 mb-2 small">Tổng quỹ chi tiêu cả nhà</h6>
+                        <h2 class="fw-bold mb-0" id="family-total-expense">0đ</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bảng quản trị tổng hợp -->
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3">
+                <h5 class="m-0 font-weight-bold text-primary fs-6"><i class="fas fa-chart-pie me-2"></i>Báo Cáo Tổng Hợp Tài Chính Thành Viên</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">Thành Viên</th>
+                                <th>Tổng Thu Nhập</th>
+                                <th>Tổng Chi Tiêu</th>
+                                <th>Chênh Lệch (Cân đối)</th>
+                                <th class="text-center">Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody id="family-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Dữ liệu giả lập 3 người: Mẹ (Admin), Con A, Con B theo đúng yêu cầu đề tài bổ sung
+        const mockFamilyData = [
+            { name: "Mẹ (Admin)", income: 25000000, expense: 8000000 },
+            { name: "Con A", income: 12000000, expense: 9500000 },
+            { name: "Con B", income: 8000000, expense: 3500000 }
+        ];
+
+        function calculateAndRenderManagement() {
+            const tbody = document.getElementById("family-table-body");
+            tbody.innerHTML = "";
+            
+            let totalFamilyExpense = 0;
+            let maxExpense = -1;
+            let maxSpenderName = "";
+
+            mockFamilyData.forEach(member => {
+                totalFamilyExpense += member.expense;
+                const balance = member.income - member.expense;
+                
+                if (member.expense > maxExpense) {
+                    maxExpense = member.expense;
+                    maxSpenderName = member.name;
+                }
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="ps-4 fw-bold text-dark">${member.name}</td>
+                        <td class="text-success fw-medium">${member.income.toLocaleString()}đ</td>
+                        <td class="text-danger fw-medium">${member.expense.toLocaleString()}đ</td>
+                        <td class="${balance >= 0 ? 'text-success' : 'text-danger'} fw-bold">
+                            ${balance >= 0 ? '+' : ''}${balance.toLocaleString()}đ
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-light text-secondary border px-2 py-1"><i class="fas fa-eye me-1"></i>Chỉ xem</span>
+                        </td>
+                    </tr>`;
+            });
+
+            document.getElementById("family-total-expense").innerText = totalFamilyExpense.toLocaleString() + "đ";
+            document.getElementById("top-spender").innerText = `${maxSpenderName} (${maxExpense.toLocaleString()}đ)`;
+        }
+
+        window.onload = calculateAndRenderManagement;
+    </script>
+</body>
+</html>
