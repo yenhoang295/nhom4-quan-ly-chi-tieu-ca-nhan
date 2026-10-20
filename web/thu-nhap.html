@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Thu Nhập Cá Nhân</title>
+    <link href="https://jsdelivr.net" rel="stylesheet">
+    <link href="https://cloudflare.com" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container py-5">
+        <div class="row mb-4">
+            <div class="col-md-12 d-flex justify-content-between align-items-center">
+                <h2 class="text-primary"><i class="fas fa-wallet me-2"></i>Quản Lý Thu Nhập Cá Nhân</h2>
+                <a href="gia-dinh-quan-tri.html" class="btn btn-outline-secondary"><i class="fas fa-users-cog me-2"></i>Trang Quản Trị Của Mẹ</a>
+            </div>
+        </div>
+
+        <!-- Thống kê tổng quan -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card bg-success text-white shadow-sm border-0">
+                    <div class="card-body">
+                        <h6 class="card-title text-uppercase opacity-75 small">Tổng Thu Nhập</h6>
+                        <h3 class="card-text fw-bold" id="total-income">0đ</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-danger text-white shadow-sm border-0">
+                    <div class="card-body">
+                        <h6 class="card-title text-uppercase opacity-75 small">Tổng Chi Tiêu (Giả lập)</h6>
+                        <h3 class="card-text fw-bold" id="total-expense">450,000đ</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card shadow-sm border-0" id="balance-card">
+                    <div class="card-body">
+                        <h6 class="card-title text-uppercase text-secondary small">Cân Đối Thu Chi</h6>
+                        <h3 class="card-text fw-bold" id="balance-amount">0đ</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Form Thêm Thu Nhập -->
+            <div class="col-md-4 mb-4">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-primary text-white py-3">
+                        <h5 class="card-title mb-0 fs-6"><i class="fas fa-plus-circle me-2"></i>Thêm Khoản Thu Nhập</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="income-form">
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Nguồn Thu Nhập</label>
+                                <input type="text" id="income-source" class="form-control" placeholder="Ví dụ: Lương tháng, Thưởng" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Số Tiền (VND)</label>
+                                <input type="number" id="income-amount" class="form-control" min="1000" placeholder="Nhập số tiền" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100 py-2"><i class="fas fa-save me-2"></i>Lưu Khoản Thu</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Danh Sách Thu Nhập -->
+            <div class="col-md-8">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="card-title mb-0 text-dark fs-6"><i class="fas fa-list-ul me-2 text-primary"></i>Lịch Sử Thu Nhập Cá Nhân</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="ps-4">Nguồn Thu</th>
+                                        <th>Số Tiền</th>
+                                        <th class="text-end pe-4">Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="income-list"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Ngày 1: Sử dụng Dữ liệu giả lập (Mock Data) theo yêu cầu kế hoạch
+        let mockIncomes = [
+            { id: 1, source: "Lương cố định", amount: 15000000 },
+            { id: 2, source: "Tiền thưởng dự án", amount: 2000000 }
+        ];
+        const mockExpenseTotal = 450000;
+
+        function renderIncomeData() {
+            const listContainer = document.getElementById("income-list");
+            let totalIncome = 0;
+            listContainer.innerHTML = "";
+
+            mockIncomes.forEach(item => {
+                totalIncome += item.amount;
+                listContainer.innerHTML += `
+                    <tr>
+                        <td class="ps-4 fw-medium">${item.source}</td>
+                        <td class="text-success fw-bold">${item.amount.toLocaleString()}đ</td>
+                        <td class="text-end pe-4">
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteIncome(${item.id})">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </td>
+                    </tr>`;
+            });
+
+            document.getElementById("total-income").innerText = totalIncome.toLocaleString() + "đ";
+            const balance = totalIncome - mockExpenseTotal;
+            const balanceAmountNode = document.getElementById("balance-amount");
+            const balanceCardNode = document.getElementById("balance-card");
+            
+            balanceAmountNode.innerText = balance.toLocaleString() + "đ";
+            if (balance >= 0) {
+                balanceAmountNode.className = "card-text text-success fw-bold";
+                balanceCardNode.className = "card shadow-sm border-start border-success border-4";
+            } else {
+                balanceAmountNode.className = "card-text text-danger fw-bold";
+                balanceCardNode.className = "card shadow-sm border-start border-danger border-4";
+            }
+        }
+
+        document.getElementById("income-form").addEventListener("submit", function(e) {
+            e.preventDefault();
+            const source = document.getElementById("income-source").value;
+            const amount = parseInt(document.getElementById("income-amount").value);
+            
+            mockIncomes.push({ id: Date.now(), source: source, amount: amount });
+            document.getElementById("income-form").reset();
+            renderIncomeData();
+        });
+
+        function deleteIncome(id) {
+            mockIncomes = mockIncomes.filter(item => item.id !== id);
+            renderIncomeData();
+        }
+
+        window.onload = renderIncomeData;
+    </script>
+</body>
+</html>
