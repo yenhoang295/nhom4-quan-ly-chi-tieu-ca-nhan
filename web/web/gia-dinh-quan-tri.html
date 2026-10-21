@@ -76,23 +76,42 @@
             { name: "Con B", income: 8000000, expense: 3500000 }
         ];
 
+        // Hàm thống kê tương ứng bằng JavaScript đồng bộ thuật toán với Java Backend (Yêu cầu Ngày 3)
+        function processFamilyFinancialReport(data) {
+            if (!data || data.length === 0) {
+                return { totalExpense: 0, topSpender: "Không có dữ liệu" };
+            }
+
+            // 1. Tính tổng quỹ chi tiêu cả gia đình (Tương đương hàm calculateTotalExpense bên Java)
+            const totalExpense = data.reduce((sum, row) => sum + (row.expense || 0), 0);
+
+            // 2. Tìm thành viên chi tiêu nhiều nhất (Tương đương hàm findTopSpender bên Java)
+            let maxExpense = -1;
+            let topSpenderName = "";
+
+            data.forEach(row => {
+                if (row.expense > maxExpense) {
+                    maxExpense = row.expense;
+                    topSpenderName = row.name;
+                }
+            });
+
+            return {
+                totalExpense: totalExpense,
+                topSpender: topSpenderName ? `${topSpenderName} (${maxExpense.toLocaleString()}đ)` : "Không có dữ liệu"
+            };
+        }
+
         function calculateAndRenderManagement() {
             const tbody = document.getElementById("family-table-body");
             tbody.innerHTML = "";
-            
-            let totalFamilyExpense = 0;
-            let maxExpense = -1;
-            let maxSpenderName = "";
+
+            // Gọi hàm xử lý JavaScript đồng bộ cấu trúc nền tảng để tính toán số liệu thống kê tổng hợp
+            const report = processFamilyFinancialReport(mockFamilyData);
 
             mockFamilyData.forEach(member => {
-                totalFamilyExpense += member.expense;
                 const balance = member.income - member.expense;
                 
-                if (member.expense > maxExpense) {
-                    maxExpense = member.expense;
-                    maxSpenderName = member.name;
-                }
-
                 tbody.innerHTML += `
                     <tr>
                         <td class="ps-4 fw-bold text-dark">${member.name}</td>
@@ -107,8 +126,9 @@
                     </tr>`;
             });
 
-            document.getElementById("family-total-expense").innerText = totalFamilyExpense.toLocaleString() + "đ";
-            document.getElementById("top-spender").innerText = `${maxSpenderName} (${maxExpense.toLocaleString()}đ)`;
+            // Ghi nhận số liệu sau xử lý thuật toán lên giao diện chính
+            document.getElementById("family-total-expense").innerText = report.totalExpense.toLocaleString() + "đ";
+            document.getElementById("top-spender").innerText = report.topSpender;
         }
 
         window.onload = calculateAndRenderManagement;
