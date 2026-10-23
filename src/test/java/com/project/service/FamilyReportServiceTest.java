@@ -50,3 +50,22 @@ public class FamilyReportServiceTest {
         assertNull(reportService.findTopSpender(Collections.emptyList()));
     }
 }
+    @Test
+    public void testCalculateTotalExpenseWithNullInput() {
+        // Test kiểm tra khả năng chống crash khi dữ liệu truyền vào bị Null
+        long total = reportService.calculateTotalExpense(null);
+        assertEquals(0L, total);
+    }
+
+    @Test
+    public void testCalculateTotalExpenseWithEmptyList() {
+        // Test kiểm tra khi danh sách chi tiêu trống rỗng
+        long total = reportService.calculateTotalExpense(Collections.emptyList());
+        assertEquals(0L, total);
+    }
+
+    @Test
+    public void testFindTopSpenderWithNullInput() {
+        // Test kiểm tra tìm người chi nhiều nhất với dữ liệu Null
+        assertNull(reportService.findTopSpender(null));
+    }
