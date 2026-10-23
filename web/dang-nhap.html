@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Đăng nhập - Chi tiêu cá nhân, Nhóm 4</title>
+  <meta name="description" content="Đăng nhập hoặc tạo tài khoản để ghi lại và xem chi tiêu của bạn.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #14283c; --fog: #e8eef0; --paper: #fff; --line: #c3d0d6; --field: #6f8796;
+      --muted: #4a6070; --teal: #0e7c7b; --teal-dark: #0a5e5d; --crimson: #b4233f; --ok: #0a5e5d;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body {
+      margin: 0; min-height: 100vh; background: var(--fog); color: var(--ink);
+      font-family: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      font-size: 1rem; line-height: 1.55;
+    }
+    .wrap { max-width: 460px; margin: 0 auto; padding: 1.5rem 1.25rem 3rem; }
+    .brand { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 2rem; }
+    .brand strong { font-size: 1.15rem; font-weight: 800; letter-spacing: -0.01em; }
+    .brand a { color: var(--teal-dark); font-weight: 500; }
+    .card { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 1.6rem; }
+    h1 { margin: 0 0 0.35rem; font-size: 1.6rem; font-weight: 800; letter-spacing: -0.01em; }
+    .hint { margin: 0 0 1.25rem; color: var(--muted); }
+    .field { display: grid; gap: 0.35rem; margin-bottom: 1rem; }
+    label { font-size: 0.9rem; font-weight: 600; }
+    input {
+      width: 100%; min-height: 44px; padding: 0.5rem 0.75rem; font: inherit; color: var(--ink);
+      background: var(--paper); border: 1px solid var(--field); border-radius: 6px;
+    }
+    input:focus-visible, button:focus-visible, a:focus-visible { outline: 3px solid var(--teal); outline-offset: 2px; }
+    [aria-invalid="true"] { border-color: var(--crimson); }
+    .err { margin: 0; color: var(--crimson); font-size: 0.875rem; }
+    .err:empty { display: none; }
+    .msg { margin: 0 0 1rem; padding: 0.7rem 0.9rem; border-radius: 6px; font-size: 0.95rem; }
+    .msg:empty { display: none; }
+    .msg.bad { background: #fbe9ec; border: 1px solid #e7b3bd; color: #7f1830; }
+    .msg.good { background: #e3f1f1; border: 1px solid #a7d3d2; color: var(--ok); }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0.55rem 1.2rem;
+      border: 1px solid var(--teal); border-radius: 6px; background: var(--teal); color: #fff;
+      font: inherit; font-weight: 700; cursor: pointer; text-decoration: none; width: 100%;
+    }
+    .btn:hover { background: var(--teal-dark); border-color: var(--teal-dark); }
+    .btn:disabled { opacity: 0.6; cursor: progress; }
+    .btn-outline { background: transparent; color: var(--teal-dark); }
+    .btn-outline:hover { background: #e3f1f1; color: var(--teal-dark); }
+    .stack { display: grid; gap: 0.75rem; }
+    .switch { margin: 1.25rem 0 0; color: var(--muted); }
+    .link-btn {
+      background: none; border: 0; padding: 0.25rem 0.1rem; min-height: 40px; color: var(--teal-dark);
+      font: inherit; font-weight: 700; text-decoration: underline; cursor: pointer;
+    }
+    .foot { margin-top: 1.5rem; color: var(--muted); font-size: 0.875rem; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="brand">
+      <strong>Chi tiêu cá nhân</strong>
+      <a href="trang-chu.html">Về trang giới thiệu</a>
+    </div>
+
+    <p id="banner" class="msg bad" role="alert" hidden></p>
+
+    <!-- Đã đăng nhập -->
+    <section id="signedIn" class="card" aria-labelledby="signedTitle" hidden>
+      <h1 id="signedTitle">Xin chào</h1>
+      <p class="hint" id="signedHint"></p>
+      <div class="stack">
+        <a class="btn" href="index.html">Vào trang quản lý khoản chi</a>
+        <button type="button" class="btn btn-outline" id="logoutBtn">Đăng xuất</button>
+      </div>
+    </section>
+
+    <!-- Form đăng nhập / tạo tài khoản -->
+    <section id="authCard" class="card" aria-labelledby="title" hidden>
+      <h1 id="title">Đăng nhập</h1>
+      <p class="hint" id="hint">Nhập email và mật khẩu để vào sổ chi tiêu của bạn.</p>
+      <form id="authForm" novalidate>
+        <div class="field" id="nameField" hidden>
+          <label for="fullName">Tên hiển thị</label>
+          <input type="text" id="fullName" autocomplete="name" maxlength="60" placeholder="Ví dụ: Mẹ, Con An" aria-describedby="fullNameErr">
+          <p class="err" id="fullNameErr"></p>
+        </div>
+        <div class="field">
+          <label for="email">Email</label>
+          <input type="email" id="email" autocomplete="username" inputmode="email" placeholder="ban@example.com" aria-describedby="emailErr">
+          <p class="err" id="emailErr"></p>
+        </div>
+        <div class="field">
+          <label for="password">Mật khẩu</label>
+          <input type="password" id="password" autocomplete="current-password" aria-describedby="passwordErr">
+          <p class="err" id="passwordErr"></p>
+        </div>
+        <p id="formMsg" class="msg" role="status"></p>
+        <button type="submit" class="btn" id="submitBtn">Đăng nhập</button>
+      </form>
+      <p class="switch"><span id="switchText">Chưa có tài khoản?</span> <button type="button" class="link-btn" id="switchBtn">Tạo tài khoản</button></p>
+    </section>
+
+    <p class="foot">Đồ án nhóm 4, đề tài 43: quản lý chi tiêu cá nhân.</p>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="auth.js"></script>
+  <script>
+    (function () {
+      "use strict";
+      var $ = function (id) { return document.getElementById(id); };
+      var mode = "login";
+
+      function setMode(next) {
+        mode = next;
+        var reg = next === "register";
+        $("nameField").hidden = !reg;
+        $("title").textContent = reg ? "Tạo tài khoản" : "Đăng nhập";
+        $("hint").textContent = reg
+          ? "Dùng tên hiển thị để cả nhà nhận ra bạn. Mật khẩu cần ít nhất 6 ký tự."
+          : "Nhập email và mật khẩu để vào sổ chi tiêu của bạn.";
+        $("submitBtn").textContent = reg ? "Tạo tài khoản" : "Đăng nhập";
+        $("switchText").textContent = reg ? "Đã có tài khoản?" : "Chưa có tài khoản?";
+        $("switchBtn").textContent = reg ? "Đăng nhập" : "Tạo tài khoản";
+        $("password").setAttribute("autocomplete", reg ? "new-password" : "current-password");
+        clearErrors();
+        setMsg("", "");
+      }
+
+      function setMsg(text, kind) {
+        var m = $("formMsg");
+        m.textContent = text;
+        m.className = "msg" + (kind ? " " + kind : "");
+      }
+
+      function clearErrors() {
+        ["fullName", "email", "password"].forEach(function (id) {
+          $(id).removeAttribute("aria-invalid");
+          $(id + "Err").textContent = "";
+        });
+      }
+
+      function fieldError(id, text) {
+        $(id).setAttribute("aria-invalid", "true");
+        $(id + "Err").textContent = text;
+      }
+
+      function showBanner(text) {
+        var b = $("banner");
+        b.textContent = text;
+        b.hidden = !text;
+      }
+
+      async function onSubmit(e) {
+        e.preventDefault();
+        clearErrors();
+        setMsg("", "");
+        var email = $("email").value.trim();
+        var password = $("password").value;
+        var fullName = $("fullName").value.trim();
+
+        var problems = [];
+        if (mode === "register" && !fullName) problems.push(["fullName", "Nhập tên hiển thị, ví dụ: Mẹ, Con An."]);
+        if (!/^\S+@\S+\.\S+$/.test(email)) problems.push(["email", "Nhập email hợp lệ, ví dụ ban@example.com."]);
+        if (password.length < 6) problems.push(["password", "Mật khẩu cần ít nhất 6 ký tự."]);
+        if (problems.length) {
+          problems.forEach(function (p) { fieldError(p[0], p[1]); });
+          $(problems[0][0]).focus();
+          return;
+        }
+
+        var btn = $("submitBtn");
+        btn.disabled = true;
+        try {
+          if (mode === "register") {
+            var r = await Auth.signUp(email, password, fullName);
+            if (!r.signedIn) {
+              setMode("login");
+              setMsg("Tạo tài khoản thành công. Hãy mở email để xác nhận rồi đăng nhập.", "good");
+              return;
+            }
+          } else {
+            await Auth.signIn(email, password);
+          }
+          window.location.href = "index.html";
+        } catch (err) {
+          setMsg(err.message, "bad");
+        } finally {
+          btn.disabled = false;
+        }
+      }
+
+      async function onLogout() {
+        try {
+          await Auth.signOut();
+          $("signedIn").hidden = true;
+          $("authCard").hidden = false;
+          setMode("login");
+        } catch (err) {
+          showBanner(err.message);
+        }
+      }
+
+      async function init() {
+        $("authForm").addEventListener("submit", onSubmit);
+        $("switchBtn").addEventListener("click", function () { setMode(mode === "login" ? "register" : "login"); });
+        $("logoutBtn").addEventListener("click", onLogout);
+
+        if (!window.Auth || !Auth.isConfigured()) {
+          showBanner("Chưa cấu hình Supabase. Mở web/config.js và điền SUPABASE_URL, SUPABASE_KEY.");
+          $("authCard").hidden = false;
+          $("submitBtn").disabled = true;
+          return;
+        }
+        try {
+          var session = await Auth.getSession();
+          if (session) {
+            var profile = null;
+            try { profile = await Auth.getProfile(); } catch (e) { /* bỏ qua, dùng email */ }
+            var name = (profile && profile.full_name) || session.user.email;
+            $("signedTitle").textContent = "Xin chào, " + name;
+            $("signedHint").textContent = "Bạn đang đăng nhập bằng " + session.user.email + ".";
+            $("signedIn").hidden = false;
+            return;
+          }
+        } catch (err) {
+          showBanner(err.message);
+        }
+        $("authCard").hidden = false;
+        setMode("login");
+      }
+
+      init();
+    })();
+  </script>
+</body>
+</html>

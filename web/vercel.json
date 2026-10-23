@@ -1,0 +1,5 @@
+{
+  "redirects": [
+    { "source": "/", "destination": "/trang-chu.html", "permanent": false }
+  ]
+}
