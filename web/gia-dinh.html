@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gia đình - Chi tiêu cá nhân, Nhóm 4</title>
+  <meta name="description" content="Tạo gia đình hoặc tham gia gia đình bằng mã mời để mẹ xem tổng thu nhập và chi tiêu của cả nhà.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #14283c; --fog: #e8eef0; --paper: #fff; --line: #c3d0d6; --field: #6f8796;
+      --muted: #4a6070; --teal: #0e7c7b; --teal-dark: #0a5e5d; --crimson: #b4233f;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body {
+      margin: 0; min-height: 100vh; background: var(--fog); color: var(--ink);
+      font-family: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      font-size: 1rem; line-height: 1.55;
+    }
+    .wrap { max-width: 860px; margin: 0 auto; padding: 1.5rem 1.25rem 3rem; }
+    .top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--line); margin-bottom: 1.75rem; }
+    .top h1 { margin: 0; font-size: clamp(1.35rem, 3vw, 1.75rem); font-weight: 800; letter-spacing: -0.01em; }
+    .nav { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; }
+    .nav a { color: var(--teal-dark); font-weight: 500; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; align-items: start; }
+    .card { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 1.4rem; }
+    .card h2 { margin: 0 0 0.4rem; font-size: 1.15rem; font-weight: 700; }
+    .hint { margin: 0 0 1rem; color: var(--muted); }
+    .field { display: grid; gap: 0.35rem; margin-bottom: 1rem; }
+    label { font-size: 0.9rem; font-weight: 600; }
+    input[type="text"] {
+      width: 100%; min-height: 44px; padding: 0.5rem 0.75rem; font: inherit; color: var(--ink);
+      background: var(--paper); border: 1px solid var(--field); border-radius: 6px;
+    }
+    input[type="text"]#code { text-transform: uppercase; letter-spacing: 0.08em; }
+    .check { display: grid; grid-template-columns: 24px 1fr; gap: 0.6rem; align-items: start; margin-bottom: 1rem; }
+    .check input { width: 22px; height: 22px; margin: 0.15rem 0 0; accent-color: var(--teal); }
+    .check label { font-weight: 400; font-size: 0.95rem; }
+    input:focus-visible, button:focus-visible, a:focus-visible { outline: 3px solid var(--teal); outline-offset: 2px; }
+    [aria-invalid="true"] { border-color: var(--crimson); }
+    .err { margin: 0; color: var(--crimson); font-size: 0.875rem; }
+    .err:empty { display: none; }
+    .msg { margin: 0 0 1rem; padding: 0.7rem 0.9rem; border-radius: 6px; font-size: 0.95rem; }
+    .msg:empty { display: none; }
+    .msg.bad { background: #fbe9ec; border: 1px solid #e7b3bd; color: #7f1830; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0.55rem 1.2rem;
+      border: 1px solid var(--teal); border-radius: 6px; background: var(--teal); color: #fff;
+      font: inherit; font-weight: 700; cursor: pointer; text-decoration: none;
+    }
+    .btn:hover { background: var(--teal-dark); border-color: var(--teal-dark); }
+    .btn:disabled { opacity: 0.6; cursor: progress; }
+    .btn-outline { background: transparent; color: var(--teal-dark); }
+    .btn-outline:hover { background: #e3f1f1; }
+    .btn-sm { min-height: 40px; padding: 0.3rem 0.9rem; font-size: 0.925rem; }
+    .badge { display: inline-block; padding: 0.1rem 0.6rem; border-radius: 999px; background: #e3f1f1; color: var(--teal-dark); font-size: 0.85rem; font-weight: 700; }
+    .code-box { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; margin: 0.5rem 0 1rem; }
+    .code-box output { font-size: 1.6rem; font-weight: 800; letter-spacing: 0.14em; font-variant-numeric: tabular-nums; }
+    .notice { padding: 0.8rem 1rem; background: #f4f8f9; border: 1px solid var(--line); border-radius: 6px; color: var(--muted); font-size: 0.95rem; margin: 0 0 1rem; }
+    .roster { list-style: none; margin: 0.5rem 0 0; padding: 0; }
+    .roster li { display: flex; justify-content: space-between; gap: 1rem; padding: 0.7rem 0; border-top: 1px solid var(--line); }
+    .roster li:first-child { border-top: 0; }
+    .when { color: var(--muted); font-size: 0.9rem; }
+    .toast { position: fixed; left: 50%; bottom: 1.5rem; transform: translateX(-50%); padding: 0.7rem 1.1rem; background: var(--ink); color: #fff; border-radius: 6px; opacity: 0; pointer-events: none; }
+    .toast.show { opacity: 1; }
+    @media (prefers-reduced-motion: no-preference) { .toast { transition: opacity 0.2s ease; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="top">
+      <h1>Gia đình</h1>
+      <nav class="nav" aria-label="Điều hướng">
+        <a href="index.html">Trang quản lý khoản chi</a>
+        <span id="who"></span>
+        <button type="button" class="btn btn-outline btn-sm" id="logoutBtn">Đăng xuất</button>
+      </nav>
+    </header>
+
+    <p id="banner" class="msg bad" role="alert" hidden></p>
+
+    <!-- Chưa thuộc gia đình nào -->
+    <div id="noFamily" class="grid" hidden>
+      <section class="card" aria-labelledby="createTitle">
+        <h2 id="createTitle">Tạo gia đình (dành cho mẹ)</h2>
+        <p class="hint">Bạn sẽ là quản trị viên và nhận một mã mời để gửi cho các thành viên.</p>
+        <form id="createForm" novalidate>
+          <div class="field">
+            <label for="familyName">Tên gia đình</label>
+            <input type="text" id="familyName" maxlength="60" autocomplete="off" placeholder="Ví dụ: Gia đình nhà Hoa" aria-describedby="familyNameErr">
+            <p class="err" id="familyNameErr"></p>
+          </div>
+          <p id="createMsg" class="msg bad" role="alert"></p>
+          <button type="submit" class="btn" id="createBtn">Tạo gia đình</button>
+        </form>
+      </section>
+
+      <section class="card" aria-labelledby="joinTitle">
+        <h2 id="joinTitle">Tham gia bằng mã mời</h2>
+        <p class="hint">Nhập mã mẹ gửi cho bạn (8 ký tự gồm chữ và số).</p>
+        <form id="joinForm" novalidate>
+          <div class="field">
+            <label for="code">Mã mời</label>
+            <input type="text" id="code" maxlength="12" autocomplete="off" spellcheck="false" aria-describedby="codeErr">
+            <p class="err" id="codeErr"></p>
+          </div>
+          <div class="check">
+            <input type="checkbox" id="agree" aria-describedby="agreeErr">
+            <label for="agree">Tôi đồng ý cho quản trị viên của gia đình xem thu nhập và chi tiêu của tôi. Quản trị viên chỉ xem, không sửa hay xóa.</label>
+          </div>
+          <p class="err" id="agreeErr"></p>
+          <p id="joinMsg" class="msg bad" role="alert"></p>
+          <button type="submit" class="btn" id="joinBtn">Tham gia</button>
+        </form>
+      </section>
+    </div>
+
+    <!-- Đã thuộc gia đình -->
+    <section id="hasFamily" class="card" aria-labelledby="famTitle" hidden>
+      <h2 id="famTitle"></h2>
+      <p><span class="badge" id="roleBadge"></span></p>
+
+      <div id="adminBlock" hidden>
+        <p class="hint">Gửi mã mời này cho các thành viên (mỗi người nhập một lần):</p>
+        <div class="code-box">
+          <output id="inviteCode" aria-label="Mã mời"></output>
+          <button type="button" class="btn btn-outline btn-sm" id="copyBtn">Sao chép mã</button>
+        </div>
+        <p class="notice">Là quản trị viên, bạn xem được thu nhập và chi tiêu của các thành viên. Bạn chỉ xem, không sửa hay xóa dữ liệu của họ.</p>
+        <h3>Thành viên</h3>
+        <ul class="roster" id="roster"></ul>
+      </div>
+
+      <p id="memberBlock" class="notice" hidden>Quản trị viên của gia đình xem được thu nhập và chi tiêu của bạn. Dữ liệu của bạn chỉ bạn mới sửa hoặc xóa được.</p>
+    </section>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="auth.js"></script>
+  <script>
+    (function () {
+      "use strict";
+      var $ = function (id) { return document.getElementById(id); };
+      var toastTimer = 0;
+
+      function toast(text) {
+        var t = $("toast");
+        t.textContent = text;
+        t.classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () { t.classList.remove("show"); }, 2600);
+      }
+      function showBanner(text) { var b = $("banner"); b.textContent = text || ""; b.hidden = !text; }
+      function setErr(id, text) { $(id).setAttribute("aria-invalid", "true"); $(id + "Err").textContent = text; }
+      function clearErrs(ids) {
+        ids.forEach(function (id) { $(id).removeAttribute("aria-invalid"); $(id + "Err").textContent = ""; });
+      }
+      function el(tag, cls, text) {
+        var e = document.createElement(tag);
+        if (cls) e.className = cls;
+        if (text !== undefined) e.textContent = text;
+        return e;
+      }
+      function oneOf(x) { return Array.isArray(x) ? x[0] : x; }
+      function dmy(iso) {
+        if (!iso) return "";
+        var d = new Date(iso);
+        return isNaN(d) ? "" : d.toLocaleDateString("vi-VN");
+      }
+
+      async function loadFamily() {
+        var session = await Auth.getSession();
+        var res = await Auth.getClient()
+          .from("family_members")
+          .select("family_id, role, families(name, invite_code)")
+          .eq("user_id", session.user.id)
+          .maybeSingle();
+        if (res.error) throw new Error(friendly(res.error));
+        return res.data;
+      }
+
+      function friendly(err) {
+        var code = err && err.code;
+        if (code === "42P01" || code === "PGRST205") {
+          return "Chưa có bảng gia đình. Chạy file supabase/family-1-bang.sql trong SQL Editor của Supabase.";
+        }
+        if (code === "PGRST202") {
+          return "Chưa có hàm tạo gia đình. Chạy file supabase/family-1-bang.sql trong SQL Editor của Supabase.";
+        }
+        return (err && err.message) || "Có lỗi xảy ra, thử lại sau.";
+      }
+
+      async function render() {
+        showBanner("");
+        var m = await loadFamily();
+        $("noFamily").hidden = !!m;
+        $("hasFamily").hidden = !m;
+        if (!m) return;
+
+        var fam = oneOf(m.families) || {};
+        var admin = m.role === "admin";
+        $("famTitle").textContent = fam.name || "Gia đình của bạn";
+        $("roleBadge").textContent = admin ? "Quản trị viên" : "Thành viên";
+        $("adminBlock").hidden = !admin;
+        $("memberBlock").hidden = admin;
+        if (admin) {
+          $("inviteCode").textContent = fam.invite_code || "";
+          await renderRoster(m.family_id);
+        }
+      }
+
+      async function renderRoster(familyId) {
+        var res = await Auth.getClient()
+          .from("family_members")
+          .select("user_id, role, joined_at, profiles(full_name)")
+          .eq("family_id", familyId)
+          .order("joined_at", { ascending: true });
+        if (res.error) throw new Error(friendly(res.error));
+        var ul = $("roster");
+        ul.replaceChildren();
+        (res.data || []).forEach(function (r) {
+          var p = oneOf(r.profiles);
+          var li = el("li");
+          var left = el("span", "", (p && p.full_name) || "Thành viên");
+          if (r.role === "admin") left.append(" ", el("span", "badge", "Quản trị viên"));
+          li.append(left, el("span", "when", "Tham gia " + dmy(r.joined_at)));
+          ul.append(li);
+        });
+      }
+
+      async function onCreate(e) {
+        e.preventDefault();
+        clearErrs(["familyName"]);
+        $("createMsg").textContent = "";
+        var name = $("familyName").value.trim();
+        if (!name) { setErr("familyName", "Nhập tên gia đình."); $("familyName").focus(); return; }
+        var btn = $("createBtn");
+        btn.disabled = true;
+        try {
+          var res = await Auth.getClient().rpc("create_family", { p_name: name });
+          if (res.error) throw new Error(friendly(res.error));
+          toast("Đã tạo gia đình");
+          await render();
+        } catch (err) {
+          $("createMsg").textContent = err.message;
+        } finally {
+          btn.disabled = false;
+        }
+      }
+
+      async function onJoin(e) {
+        e.preventDefault();
+        clearErrs(["code", "agree"]);
+        $("joinMsg").textContent = "";
+        var code = $("code").value.trim().toUpperCase();
+        var problems = [];
+        if (!code) problems.push(["code", "Nhập mã mời."]);
+        if (!$("agree").checked) problems.push(["agree", "Bạn cần đồng ý trước khi tham gia."]);
+        if (problems.length) {
+          problems.forEach(function (p) { setErr(p[0], p[1]); });
+          $(problems[0][0]).focus();
+          return;
+        }
+        var btn = $("joinBtn");
+        btn.disabled = true;
+        try {
+          var res = await Auth.getClient().rpc("join_family", { p_code: code });
+          if (res.error) throw new Error(friendly(res.error));
+          toast("Đã tham gia gia đình");
+          await render();
+        } catch (err) {
+          $("joinMsg").textContent = err.message;
+        } finally {
+          btn.disabled = false;
+        }
+      }
+
+      async function onCopy() {
+        var code = $("inviteCode").textContent;
+        try {
+          await navigator.clipboard.writeText(code);
+          toast("Đã sao chép mã " + code);
+        } catch (e) {
+          toast("Không sao chép được, hãy chép mã bằng tay: " + code);
+        }
+      }
+
+      async function onLogout() {
+        try { await Auth.signOut(); } catch (e) { /* bỏ qua */ }
+        window.location.replace("dang-nhap.html");
+      }
+
+      async function init() {
+        $("createForm").addEventListener("submit", onCreate);
+        $("joinForm").addEventListener("submit", onJoin);
+        $("copyBtn").addEventListener("click", onCopy);
+        $("logoutBtn").addEventListener("click", onLogout);
+
+        if (!window.Auth || !Auth.isConfigured()) {
+          showBanner("Chưa cấu hình Supabase. Mở web/config.js và điền SUPABASE_URL, SUPABASE_KEY.");
+          return;
+        }
+        try {
+          var session = await Auth.requireLogin("dang-nhap.html");
+          if (!session) return;
+          Auth.onSignedOut(function () { window.location.replace("dang-nhap.html"); });
+          var profile = null;
+          try { profile = await Auth.getProfile(); } catch (e) { /* dùng email */ }
+          $("who").textContent = (profile && profile.full_name) || session.user.email;
+          await render();
+        } catch (err) {
+          showBanner(err.message);
+        }
+      }
+
+      init();
+    })();
+  </script>
+</body>
+</html>
