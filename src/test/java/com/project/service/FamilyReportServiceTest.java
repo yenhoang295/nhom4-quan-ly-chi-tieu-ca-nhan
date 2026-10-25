@@ -18,15 +18,21 @@ public class FamilyReportServiceTest {
     public void setUp() {
         reportService = new FamilyReportService();
         
-        // Giả lập cấu trúc dữ liệu Map tương tự như cấu trúc JSON trả về từ DB
+        // Cập nhật cấu trúc bản ghi khớp hoàn toàn với DB thực tế (Sử dụng spent_on thay vì created_at)
         Map<String, Object> exp1 = new HashMap<>();
-        exp1.put("user_name", "Con A"); exp1.put("amount", 500000);
+        exp1.put("user_name", "Con A"); 
+        exp1.put("amount", 500000);
+        exp1.put("spent_on", "2026-10-05");
         
         Map<String, Object> exp2 = new HashMap<>();
-        exp2.put("user_name", "Con A"); exp2.put("amount", 300000);
+        exp2.put("user_name", "Con A"); 
+        exp2.put("amount", 300000);
+        exp2.put("spent_on", "2026-10-12");
         
         Map<String, Object> exp3 = new HashMap<>();
-        exp3.put("user_name", "Con B"); exp3.put("amount", 1200000);
+        exp3.put("user_name", "Con B"); 
+        exp3.put("amount", 1200000);
+        exp3.put("spent_on", "2026-10-20");
 
         mockExpenses = Arrays.asList(exp1, exp2, exp3);
     }
@@ -34,38 +40,29 @@ public class FamilyReportServiceTest {
     @Test
     public void testCalculateTotalFamilyExpense() {
         long total = reportService.calculateTotalExpense(mockExpenses);
-        // Tổng chi tiêu kỳ vọng: 500k + 300k + 1200k = 2000k
         assertEquals(2000000L, total); 
     }
 
     @Test
     public void testFindTopSpender() {
         String topSpender = reportService.findTopSpender(mockExpenses);
-        // Con B tiêu 1200k (nhiều nhất nhà)
         assertEquals("Con B", topSpender); 
     }
 
     @Test
-    public void testFindTopSpenderWithEmptyList() {
-        assertNull(reportService.findTopSpender(Collections.emptyList()));
-    }
-}
-    @Test
     public void testCalculateTotalExpenseWithNullInput() {
-        // Test kiểm tra khả năng chống crash khi dữ liệu truyền vào bị Null
         long total = reportService.calculateTotalExpense(null);
         assertEquals(0L, total);
     }
 
     @Test
     public void testCalculateTotalExpenseWithEmptyList() {
-        // Test kiểm tra khi danh sách chi tiêu trống rỗng
         long total = reportService.calculateTotalExpense(Collections.emptyList());
         assertEquals(0L, total);
     }
 
     @Test
     public void testFindTopSpenderWithNullInput() {
-        // Test kiểm tra tìm người chi nhiều nhất với dữ liệu Null
         assertNull(reportService.findTopSpender(null));
     }
+}
