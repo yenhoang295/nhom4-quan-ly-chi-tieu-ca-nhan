@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quản trị gia đình - Chi tiêu cá nhân, Nhóm 4</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --ink: #14283c; --fog: #e8eef0; --paper: #fff; --line: #c3d0d6; --field: #6f8796;
+      --muted: #4a6070; --teal: #0e7c7b; --teal-dark: #0a5e5d; --crimson: #b4233f; --green: #17794a;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    html { min-height: 100%; }
+    body {
+      margin: 0; min-height: 100vh; color: var(--ink);
+      font-family: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      font-size: 1rem; line-height: 1.55;
+      background-color: var(--fog);
+      background-image:
+        radial-gradient(60rem 28rem at 105% -8%, rgba(14, 124, 123, 0.20), transparent 70%),
+        radial-gradient(48rem 26rem at -10% 108%, rgba(20, 40, 60, 0.12), transparent 70%),
+        linear-gradient(180deg, #eef3f4 0%, #e1ebed 100%);
+      background-attachment: fixed;
+    }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 1.5rem 1.25rem 3rem; }
+    .top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--line); margin-bottom: 1.75rem; }
+    .top h1 { margin: 0; font-size: clamp(1.35rem, 3vw, 1.75rem); font-weight: 800; letter-spacing: -0.01em; }
+    .nav { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; }
+    .nav a { color: var(--teal-dark); font-weight: 500; }
+    .bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; margin-bottom: 1.25rem; }
+    .bar label { font-weight: 600; }
+    input[type="month"] {
+      min-height: 44px; padding: 0.4rem 0.75rem; font: inherit; color: var(--ink);
+      background: var(--paper); border: 1px solid var(--field); border-radius: 6px;
+    }
+    input:focus-visible, a:focus-visible, button:focus-visible { outline: 3px solid var(--teal); outline-offset: 2px; }
+    .sums { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+    .sum { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 1rem 1.2rem; border-left-width: 5px; }
+    .sum.top-s { border-left-color: var(--crimson); }
+    .sum.total { border-left-color: var(--teal); }
+    .sum small { display: block; color: var(--muted); font-size: 0.9rem; }
+    .sum strong { display: block; font-size: 1.45rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+    .card { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 1.3rem; }
+    .card h2 { margin: 0 0 1rem; font-size: 1.1rem; font-weight: 700; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 560px; }
+    th, td { text-align: left; padding: 0.75rem 0.6rem; border-top: 1px solid var(--line); }
+    thead th { border-top: 0; color: var(--muted); font-size: 0.9rem; font-weight: 600; }
+    td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+    td.pos { color: var(--green); font-weight: 700; }
+    td.neg { color: var(--crimson); font-weight: 700; }
+    .badge { display: inline-block; margin-left: 0.4rem; padding: 0.05rem 0.55rem; border-radius: 999px; background: #fbe9ec; color: #7f1830; font-size: 0.82rem; font-weight: 700; }
+    .badge.view { background: #e3f1f1; color: var(--teal-dark); margin-left: 0; }
+    .empty { text-align: center; color: var(--muted); padding: 1.5rem 0.5rem; }
+    .msg { margin: 0 0 1rem; padding: 0.7rem 0.9rem; border-radius: 6px; font-size: 0.95rem; background: #fbe9ec; border: 1px solid #e7b3bd; color: #7f1830; }
+    .deny { max-width: 520px; margin: 3rem auto; text-align: center; }
+    .deny p { color: var(--muted); }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0.55rem 1.2rem;
+      border: 1px solid var(--teal); border-radius: 6px; background: var(--teal); color: #fff;
+      font: inherit; font-weight: 700; text-decoration: none;
+    }
+    .btn:hover { background: var(--teal-dark); border-color: var(--teal-dark); }
+    .note { margin: 0.9rem 0 0; color: var(--muted); font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="top">
+      <h1>Quản trị gia đình</h1>
+      <nav class="nav" aria-label="Điều hướng">
+        <a href="thu-nhap.html">Thu nhập cá nhân</a>
+        <a href="index.html">Khoản chi</a>
+        <a href="gia-dinh.html">Gia đình</a>
+      </nav>
+    </header>
+
+    <p id="banner" class="msg" role="alert" hidden></p>
+
+    <section id="deny" class="card deny" hidden>
+      <h2 id="denyTitle">Bạn chưa có quyền xem trang này</h2>
+      <p id="denyText"></p>
+      <a class="btn" href="gia-dinh.html">Mở trang Gia đình</a>
+    </section>
+
+    <div id="main" hidden>
+      <div class="bar">
+        <label for="month">Chọn tháng</label>
+        <input type="month" id="month">
+      </div>
+
+      <section class="sums" aria-label="Tổng quan">
+        <div class="sum top-s"><small>Thành viên chi nhiều nhất trong tháng</small><strong id="topSpender">...</strong></div>
+        <div class="sum total"><small>Tổng chi tiêu cả nhà</small><strong id="familyTotal">0đ</strong></div>
+      </section>
+
+      <section class="card" aria-labelledby="tblTitle">
+        <h2 id="tblTitle">Thu nhập và chi tiêu từng thành viên</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Thành viên</th>
+                <th class="num">Tổng thu nhập</th>
+                <th class="num">Tổng chi tiêu</th>
+                <th class="num">Chênh lệch</th>
+                <th>Quyền của bạn</th>
+              </tr>
+            </thead>
+            <tbody id="rows">
+              <tr><td colspan="5" class="empty">Đang tải dữ liệu...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="note">Bạn là quản trị viên nên chỉ xem được dữ liệu của các thành viên, không sửa hay xóa.</p>
+      </section>
+    </div>
+  </div>
+
+  <!-- config.js phải đứng trước auth.js -->
+  <script src="config.js"></script>
+  <script src="auth.js"></script>
+  <script>
+    (function () {
+      "use strict";
+      var db = null, familyId = null;
+      var $ = function (id) { return document.getElementById(id); };
+
+      function showBanner(t) { var b = $("banner"); b.textContent = t || ""; b.hidden = !t; }
+      function money(n) { return Number(n || 0).toLocaleString("vi-VN") + "đ"; }
+      function signed(n) { return (n >= 0 ? "+" : "-") + money(Math.abs(n)); }
+      function cell(text, cls) {
+        var td = document.createElement("td");
+        if (cls) td.className = cls;
+        td.textContent = text; // textContent: chữ người dùng nhập không chạy được như mã
+        return td;
+      }
+
+      function monthRange(value) {
+        var p = value.split("-");
+        var y = Number(p[0]), m = Number(p[1]);
+        var start = y + "-" + String(m).padStart(2, "0") + "-01";
+        // Tính bằng chuỗi để không lệch múi giờ (tránh mất ngày cuối tháng)
+        var next = m === 12 ? (y + 1) + "-01-01" : y + "-" + String(m + 1).padStart(2, "0") + "-01";
+        return { start: start, next: next };
+      }
+
+      function denyView(title, text) {
+        $("main").hidden = true;
+        $("deny").hidden = false;
+        $("denyTitle").textContent = title;
+        $("denyText").textContent = text;
+      }
+
+      async function checkAdmin(user) {
+        var res = await db.from("family_members")
+          .select("family_id, role")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        if (res.error) { showBanner("Lỗi kiểm tra quyền: " + res.error.message); return false; }
+        if (!res.data) {
+          denyView("Bạn chưa thuộc gia đình nào", "Hãy tạo gia đình hoặc nhập mã mời ở trang Gia đình trước.");
+          return false;
+        }
+        if (res.data.role !== "admin") {
+          denyView("Chỉ quản trị viên mới xem được", "Trang này dành cho Mẹ (quản trị viên của gia đình).");
+          return false;
+        }
+        familyId = res.data.family_id;
+        return true;
+      }
+
+      async function loadReport() {
+        showBanner("");
+        var range = monthRange($("month").value);
+
+        var mem = await db.from("family_members").select("user_id").eq("family_id", familyId);
+        if (mem.error) { showBanner("Lỗi tải danh sách thành viên: " + mem.error.message); return; }
+        var ids = (mem.data || []).map(function (r) { return r.user_id; });
+        if (!ids.length) { render([]); return; }
+
+        var prof = await db.from("profiles").select("id, full_name").in("id", ids);
+        if (prof.error) { showBanner("Lỗi tải tên thành viên: " + prof.error.message); return; }
+
+        var inc = await db.from("incomes").select("user_id, amount")
+          .in("user_id", ids).gte("received_on", range.start).lt("received_on", range.next);
+        if (inc.error) { showBanner("Lỗi tải thu nhập: " + inc.error.message); return; }
+
+        var exp = await db.from("expenses").select("user_id, amount")
+          .in("user_id", ids).gte("spent_on", range.start).lt("spent_on", range.next);
+        if (exp.error) { showBanner("Lỗi tải chi tiêu: " + exp.error.message); return; }
+
+        var names = {};
+        (prof.data || []).forEach(function (p) { names[p.id] = p.full_name; });
+        var totals = {};
+        ids.forEach(function (id) { totals[id] = { income: 0, expense: 0 }; });
+        (inc.data || []).forEach(function (r) { totals[r.user_id].income += Number(r.amount) || 0; });
+        (exp.data || []).forEach(function (r) { totals[r.user_id].expense += Number(r.amount) || 0; });
+
+        render(ids.map(function (id) {
+          return { name: names[id] || "Thành viên", income: totals[id].income, expense: totals[id].expense };
+        }));
+      }
+
+      function render(data) {
+        var body = $("rows");
+        body.replaceChildren();
+
+        if (!data.length) {
+          var tr0 = document.createElement("tr");
+          var td0 = cell("Chưa có thành viên nào trong gia đình.", "empty");
+          td0.colSpan = 5;
+          tr0.appendChild(td0);
+          body.appendChild(tr0);
+          $("familyTotal").textContent = "0đ";
+          $("topSpender").textContent = "Chưa có dữ liệu";
+          return;
+        }
+
+        var totalExpense = 0, maxExpense = 0, maxName = "";
+        data.forEach(function (m) {
+          totalExpense += m.expense;
+          if (m.expense > maxExpense) { maxExpense = m.expense; maxName = m.name; }
+        });
+
+        data.forEach(function (m) {
+          var balance = m.income - m.expense;
+          var tr = document.createElement("tr");
+
+          var tdName = cell(m.name);
+          if (maxName && m.name === maxName && m.expense === maxExpense) {
+            var badge = document.createElement("span");
+            badge.className = "badge";
+            badge.textContent = "Chi nhiều nhất";
+            tdName.appendChild(badge);
+          }
+          tr.appendChild(tdName);
+          tr.appendChild(cell(money(m.income), "num"));
+          tr.appendChild(cell(money(m.expense), "num"));
+          tr.appendChild(cell(signed(balance), "num " + (balance >= 0 ? "pos" : "neg")));
+
+          var tdRole = document.createElement("td");
+          var view = document.createElement("span");
+          view.className = "badge view";
+          view.textContent = "Chỉ xem";
+          tdRole.appendChild(view);
+          tr.appendChild(tdRole);
+
+          body.appendChild(tr);
+        });
+
+        $("familyTotal").textContent = money(totalExpense);
+        $("topSpender").textContent = maxName ? maxName + " (" + money(maxExpense) + ")" : "Chưa có chi tiêu";
+      }
+
+      function currentMonth() {
+        var d = new Date();
+        return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+      }
+
+      async function init() {
+        if (!window.Auth || !Auth.isConfigured()) {
+          showBanner("Chưa cấu hình Supabase. Kiểm tra file web/config.js.");
+          return;
+        }
+        try {
+          db = Auth.getClient();
+          var session = await Auth.requireLogin("dang-nhap.html");
+          if (!session) return;
+          Auth.onSignedOut(function () { window.location.replace("dang-nhap.html"); });
+
+          var ok = await checkAdmin(session.user);
+          if (!ok) return;
+
+          $("month").value = currentMonth();
+          $("month").addEventListener("change", function () {
+            if ($("month").value) loadReport();
+          });
+          $("main").hidden = false;
+          await loadReport();
+        } catch (err) {
+          showBanner(err.message);
+        }
+      }
+      init();
+    })();
+  </script>
+</body>
+</html>
