@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hệ Thống Quản Trị Tài Chính Gia Đình - Bảo Mật Đạt Chuẩn</title>
+    <title>Hệ Thống Quản Trị Tài Chính Gia Đình - Dữ Liệu Thật</title>
     <link href="https://jsdelivr.net" rel="stylesheet">
     <link href="https://cloudflare.com" rel="stylesheet">
     <script src="https://jsdelivr.net"></script>
@@ -77,7 +77,7 @@
                     <div class="card-body">
                         <i class="fas fa-user-shield text-danger display-1 mb-4"></i>
                         <h3 class="text-dark fw-bold">Truy Cập Bị Từ Chối</h3>
-                        <p class="text-secondary mb-4">Hệ thống phát hiện tài khoản của bạn chưa tham gia nhóm Gia đình hoặc không có quyền Admin. Lưu ý: Quyền truy cập được bảo mật tối cao bằng cơ chế RLS (Row Level Security) trực tiếp tại lớp Database bên dưới.</p>
+                        <p class="text-secondary mb-4">Hệ thống phát hiện tài khoản của bạn chưa tham gia nhóm Gia đình hoặc không có quyền Admin (Mẹ). Quy tắc bảo mật được thực thi bằng chính sách RLS chặt chẽ trong Database.</p>
                         <a href="thu-nhap.html" class="btn btn-primary px-4 py-2"><i class="fas fa-arrow-left me-2"></i>Quay lại Trang Cá Nhân</a>
                     </div>
                 </div>
@@ -85,7 +85,7 @@
         </div>
     </div>
 
-    <!-- Nhúng file auth.js dùng chung -->
+    <!-- Nhúng file auth.js dùng chung từ main -->
     <script src="auth.js"></script>
     <script>
         const currentDate = new Date();
@@ -94,7 +94,7 @@
 
         let activeFamilyId = null;
 
-        // Hàm tiện ích: Tránh tấn công XSS bằng cách mã hóa các ký tự đặc biệt (Sửa lỗi số 3)
+        // SỬA LỖI SỐ 5: Hàm khử mã độc XSS bảo vệ chữ người dùng nhập
         function escapeHTML(str) {
             if (!str) return '';
             return str.replace(/[&<>'"]/g, 
@@ -109,39 +109,21 @@
                 return;
             }
 
-            try {
-                // Kiểm tra thành viên gia đình
-                const { data: memberData, error: memberError } = await supabase
-                    .from('family_members')
-                    .select('family_id')
-                    .eq('user_id', user.id)
-                    .single();
+            // SỬA LỖI SỐ 2: Gộp kiểm tra lấy role từ family_members thay vì bảng profiles
+            const { data: member, error } = await supabase
+                .from('family_members')
+                .select('family_id, role')
+                .eq('user_id', user.id)
+                .maybeSingle();
 
-                if (memberError || !memberData) {
-                    showUnauthorizedUI();
-                    return;
-                }
-                activeFamilyId = memberData.family_id;
-
-                // Kiểm tra vai trò admin của Mẹ trên giao diện
-                const { data: profileData, error: profileError } = await supabase
-                    .from('profiles')
-                    .select('role')
-                    .eq('id', user.id)
-                    .single();
-
-                if (profileError || !profileData || profileData.role !== 'admin') {
-                    showUnauthorizedUI();
-                    return;
-                }
-
-                document.getElementById("main-admin-ui").classList.remove("d-none");
-                await loadFamilyRealtimeMetrics();
-
-            } catch (err) {
-                console.error("Lỗi xác thực:", err.message);
-                showUnauthorizedUI();
+            if (error || !member || member.role !== 'admin') { 
+                showUnauthorizedUI(); 
+                return; 
             }
+            activeFamilyId = member.family_id;
+
+            document.getElementById("main-admin-ui").classList.remove("d-none");
+            await loadFamilyRealtimeMetrics();
         }
 
         function showUnauthorizedUI() {
@@ -151,36 +133,59 @@
 
         async function loadFamilyRealtimeMetrics() {
             if (!activeFamilyId) return;
-            const selectedMonth = document.getElementById("filter-month").value; 
+            const selectedMonth = document.getElementById("filter-month").value;
 
+            // SỬA LỖI SỐ 1: Đổi profiles.name thành profiles.full_name
             const { data: members, error: membersError } = await supabase
                 .from('family_members')
-                .select('user_id, profiles(name)')
+                .select('user_id, profiles(id, full_name)')
                 .eq('family_id', activeFamilyId);
 
+            // SỬA LỖI SỐ 6: Kiểm tra và hiển thị biến error tránh nuốt lỗi
             if (membersError) {
-                console.error("Lỗi lấy thành viên:", membersError.message);
+                console.error("Lỗi lấy danh sách thành viên:", membersError.message);
+                alert("Lỗi tải dữ liệu thành viên: " + membersError.message);
                 return;
             }
+
+            // SỬA LỖI SỐ 3: Tính khoảng ngày thay vì dùng .like()
+            const start = selectedMonth + '-01';
+            const [y, m] = selectedMonth.split('-').map(Number);
+            const end = new Date(y, m, 1).toISOString().slice(0, 10);
 
             let reportData = [];
 
             for (let m of members) {
                 const userId = m.user_id;
-                const userName = m.profiles ? m.profiles.name : "Thành viên gia đình";
+                const userName = m.profiles ? m.profiles.full_name : "Thành viên";
 
-                // SỬA LỖI SỐ 2: Lọc theo cột 'date' chi tiêu thật/thu nhập thật thay vì dùng 'created_at' hệ thống
-                const { data: incomes } = await supabase
+                // SỬA LỖI SỐ 3 & SỐ 6: Lọc incomes theo received_on và check error
+                const { data: incomes, error: incError } = await supabase
                     .from('incomes')
                     .select('amount')
                     .eq('user_id', userId)
-                    .like('date', `${selectedMonth}%`); // Đổi từ created_at sang cột date nghiệp vụ thật
+                    .gte('received_on', start)
+                    .lt('received_on', end);
 
-                const { data: expenses } = await supabase
+                if (incError) {
+                    console.error("Lỗi tải incomes:", incError.message);
+                    alert("Lỗi tải dữ liệu thu nhập: " + incError.message);
+                    return;
+                }
+
+                // SỬA LỖI SỐ 3 & SỐ 6: Lọc expenses theo spent_on và check error
+                const { data: expenses, error: expError } = await supabase
                     .from('expenses')
                     .select('amount')
                     .eq('user_id', userId)
-                    .like('date', `${selectedMonth}%`); // Đổi từ created_at sang cột date nghiệp vụ thật
+                    .gte('spent_on', start)
+                    .lt('spent_on', end);
+
+                if (expError) {
+                    console.error("Lỗi tải expenses:", expError.message);
+                    alert("Lỗi tải dữ liệu chi tiêu: " + expError.message);
+                    return;
+                }
 
                 const totalIncome = incomes ? incomes.reduce((sum, item) => sum + item.amount, 0) : 0;
                 const totalExpense = expenses ? expenses.reduce((sum, item) => sum + item.amount, 0) : 0;
@@ -200,25 +205,23 @@
             tbody.innerHTML = "";
 
             if (data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-secondary">Không có dữ liệu trong tháng này.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-secondary">Không có dữ liệu tài chính cho tháng này.</td></tr>`;
                 document.getElementById("family-total-expense").innerText = "0đ";
-                document.getElementById("top-spender").innerText = "Không có dữ liệu";
+                document.getElementById("top-spender").textContent = "Không có dữ liệu";
                 return;
             }
 
             let totalFamilyExpense = 0;
             let maxExpense = -1;
             let maxSpenderName = "";
-
-            data.forEach(member => {
-                totalFamilyExpense += member.expense;
-                const balance = member.income - member.expense;
-                
-                if (member.expense > maxExpense && member.expense > 0) {
-                    maxExpense = member.expense;
+data.forEach(member => {
+totalFamilyExpense += member.expense;
+const balance = member.income - member.expense;
+if (member.expense > maxExpense && member.expense > 0) {
+maxExpense = member.expense;
 maxSpenderName = member.name;
 }
-// SỬA LỖI SỐ 3: Sử dụng hàm escapeHTML() bao bọc member.name để triệt tiêu hoàn toàn nguy cơ tấn công chèn mã độc XSS
+// SỬA LỖI SỐ 5: Dùng escapeHTML bảo vệ dữ liệu member.name khi render
 tbody.innerHTML += `
 ${escapeHTML(member.name)}
 ${member.income.toLocaleString()}đ
@@ -227,7 +230,7 @@ ${member.expense.toLocaleString()}đ
 `;
 });
 document.getElementById("family-total-expense").innerText = totalFamilyExpense.toLocaleString() + "đ";
-// SỬA LỖI SỐ 3: Sử dụng textContent thay vì innerHTML cho các thẻ hiển thị text trực tiếp từ biến để tăng tính bảo mật
+// SỬA LỖI SỐ 5: Sử dụng textContent thay vì innerHTML để hiển thị chữ an toàn chống XSS
 document.getElementById("top-spender").textContent = maxSpenderName ? ${maxSpenderName} (${maxExpense.toLocaleString()}đ) : "Không có chi tiêu";
 }
 document.addEventListener("DOMContentLoaded", verifySecurityAndLoadData);
