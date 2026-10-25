@@ -1,17 +1,17 @@
-```
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hệ Thống Quản Trị Tài Chính Gia Đình - Realtime Data</title>
+    <title>Hệ Thống Quản Trị Tài Chính Gia Đình - Dữ Liệu Thật</title>
     <link href="https://jsdelivr.net" rel="stylesheet">
     <link href="https://cloudflare.com" rel="stylesheet">
+    <!-- Nhúng thư viện SDK Supabase chính thức -->
     <script src="https://jsdelivr.net"></script>
 </head>
 <body class="bg-light">
     
-    <!-- GIAO DIỆN CHÍNH CỦA ADMIN -->
+    <!-- 1. GIAO DIỆN CHÍNH CỦA ADMIN (Ẩn mặc định bằng d-none để bảo mật tuyệt đối trước khi check quyền) -->
     <div id="main-admin-ui" class="container py-5 d-none">
         <div class="row mb-4">
             <div class="col-md-12 d-flex justify-content-between align-items-center flex-wrap gap-3">
@@ -24,6 +24,7 @@
             </div>
         </div>
 
+        <!-- Khối phân tích thông minh dựa trên Dữ liệu thật -->
         <div class="row mb-4">
             <div class="col-md-6 mb-3">
                 <div class="card border-0 shadow-sm text-white" style="background: linear-gradient(135deg, #e74a3b 0%, #be2617 100%);">
@@ -43,6 +44,7 @@
             </div>
         </div>
 
+        <!-- Bảng hiển thị dữ liệu thật (Chỉ Xem) -->
         <div class="card shadow-sm border-0">
             <div class="card-header bg-white py-3">
                 <h5 class="m-0 font-weight-bold text-primary fs-6"><i class="fas fa-chart-pie me-2"></i>Báo Cáo Tổng Hợp Tài Chính Thành Viên (Real-time)</h5>
@@ -70,7 +72,7 @@
         </div>
     </div>
 
-    <!-- GIAO DIỆN BÁO LỖI PHÂN QUYỀN -->
+    <!-- 2. GIAO DIỆN BÁO LỖI PHÂN QUYỀN -->
     <div id="unauthorized-ui" class="container py-5 d-none">
         <div class="row justify-content-center">
             <div class="col-md-6 text-center">
@@ -78,7 +80,7 @@
                     <div class="card-body">
                         <i class="fas fa-user-shield text-danger display-1 mb-4"></i>
                         <h3 class="text-dark fw-bold">Truy Cập Bị Từ Chối</h3>
-                        <p class="text-secondary mb-4">Hệ thống phát hiện tài khoản của bạn chưa tham gia nhóm Gia đình hoặc không có quyền Admin (Mẹ). Quy tắc bảo mật được kiểm soát tối cao bằng cơ chế RLS (Row Level Security) trực tiếp tại lớp Database.</p>
+                        <p class="text-secondary mb-4">Hệ thống phát hiện tài khoản của bạn chưa tham gia nhóm Gia đình hoặc không có quyền đặc trị Admin (Mẹ). Lưu ý: Quyền bảo mật cốt lõi được thực thi nghiêm ngặt bằng cơ chế RLS (Row Level Security) trực tiếp tại lớp Database.</p>
                         <a href="thu-nhap.html" class="btn btn-primary px-4 py-2"><i class="fas fa-arrow-left me-2"></i>Quay lại Trang Cá Nhân</a>
                     </div>
                 </div>
@@ -86,7 +88,7 @@
         </div>
     </div>
 
-    <!-- Nhúng file auth.js dùng chung từ main -->
+    <!-- Nhúng file auth.js dùng chung của Dev A từ main -->
     <script src="auth.js"></script>
     <script>
         const currentDate = new Date();
@@ -95,7 +97,7 @@
 
         let activeFamilyId = null;
 
-        // XỬ LÝ LỖI SỐ 5: Hàm khử mã độc bảo vệ chữ người dùng tránh tấn công XSS
+        // Hàm tiện ích mã hóa ký tự đặc biệt để chặn hoàn toàn lỗ hổng bảo mật XSS
         function escapeHTML(str) {
             if (!str) return '';
             return str.replace(/[&<>'"]/g, 
@@ -106,31 +108,38 @@
         async function verifySecurityAndLoadData() {
             const { data: { user }, error: authError } = await supabase.auth.getUser();
             if (authError || !user) {
-                window.location.href = "index.html";
+                window.location.href = "index.html"; 
                 return;
             }
 
-            // XỬ LÝ LỖI SỐ 2: Gộp kiểm tra lấy vai trò admin nằm ở family_members.role thay vì bảng profiles
-            const { data: member, error } = await supabase
-                .from('family_members')
-                .select('family_id, role')
-                .eq('user_id', user.id)
-                .maybeSingle();
+            try {
+                // Kiểm tra xem user đã thuộc về một gia đình nào chưa trong bảng family_members
+                const { data: member, error } = await supabase
+                    .from('family_members')
+                    .select('family_id, role')
+                    .eq('user_id', user.id)
+                    .maybeSingle();
 
-            if (error) {
-                console.error("Lỗi xác thực thành viên:", error.message);
-                alert("Lỗi hệ thống xác thực: " + error.message);
-                return;
-            }
+                if (error) {
+                    console.error("Lỗi xác thực thành viên:", error.message);
+                    alert("Lỗi hệ thống xác thực: " + error.message);
+                    return;
+                }
 
-            if (!member || member.role !== 'admin') {
+                if (!member || member.role !== 'admin') {
+                    showUnauthorizedUI();
+                    return;
+                }
+                activeFamilyId = member.family_id;
+
+                // Nếu vượt qua tất cả các chốt chặn an toàn (Guard Clauses), mở khóa UI Admin
+                document.getElementById("main-admin-ui").classList.remove("d-none");
+                await loadFamilyRealtimeMetrics();
+
+            } catch (err) {
+                console.error("Lỗi bảo mật hệ thống:", err.message);
                 showUnauthorizedUI();
-                return;
             }
-            activeFamilyId = member.family_id;
-
-            document.getElementById("main-admin-ui").classList.remove("d-none");
-            await loadFamilyRealtimeMetrics();
         }
 
         function showUnauthorizedUI() {
@@ -140,33 +149,46 @@
 
         async function loadFamilyRealtimeMetrics() {
             if (!activeFamilyId) return;
-            const selectedMonth = document.getElementById("filter-month").value;
+            const selectedMonth = document.getElementById("filter-month").value; 
 
-            // XỬ LÝ LỖI SỐ 1: Lấy profiles(full_name) đồng bộ cấu trúc khóa ngoại của trang gia-dinh.html
-            const { data: members, error: membersError } = await supabase
+            // BƯỚC 1: Lấy danh sách user_id từ bảng family_members (Tách riêng bảng để tránh lỗi relationship)
+            const { data: familyMembers, error: membersError } = await supabase
                 .from('family_members')
-                .select('user_id, profiles(full_name)')
+                .select('user_id')
                 .eq('family_id', activeFamilyId);
 
-            // XỬ LÝ LỖI SỐ 6: Đọc và hiển thị biến error tường minh trong mọi truy vấn
-            if (membersError) {
-                console.error("Lỗi lấy danh sách thành viên:", membersError.message);
-                alert("Lỗi tải dữ liệu thành viên: " + membersError.message);
-                return;
+            if (membersError) { 
+                console.error("Lỗi lấy danh sách thành viên:", membersError.message); 
+                alert("Lỗi tải dữ liệu thành viên: " + membersError.message); 
+                return; 
             }
 
-            // XỬ LÝ LỖI SỐ 3: Lọc theo khoảng ngày toán tử .gte() và .lt() thay vì dùng .like()
+            // Tính khoảng ngày để lọc theo tháng
             const start = selectedMonth + '-01';
             const [y, m] = selectedMonth.split('-').map(Number);
             const end = new Date(y, m, 1).toISOString().slice(0, 10);
 
             let reportData = [];
 
-            for (let m of members) {
-                const userId = m.user_id;
-                const userName = m.profiles ? m.profiles.full_name : "Thành viên";
+            // Duyệt qua từng thành viên để lấy thông tin tên và số liệu thu/chi
+            for (let memberRow of familyMembers) {
+                const userId = memberRow.user_id;
+                let userName = "Thành viên";
 
-                // XỬ LÝ LỖI SỐ 3 & SỐ 6: Lọc incomes theo trường ngày thực tế `received_on` kèm check error
+                // BƯỚC 2: Lấy full_name từ bảng profiles bằng user_id độc lập
+                const { data: profile, error: profError } = await supabase
+                    .from('profiles')
+                    .select('full_name')
+                    .eq('id', userId)
+                    .maybeSingle();
+
+                if (profError) {
+                    console.error("Lỗi lấy thông tin profiles:", profError.message);
+                } else if (profile && profile.full_name) {
+                    userName = profile.full_name;
+                }
+
+                // BƯỚC 3: Lấy tổng thu nhập theo cột received_on chuẩn xác
                 const { data: incomes, error: incError } = await supabase
                     .from('incomes')
                     .select('amount')
@@ -174,86 +196,62 @@
                     .gte('received_on', start)
                     .lt('received_on', end);
 
-                if (incError) {
-                    console.error("Lỗi tải incomes:", incError.message);
-                    alert("Lỗi tải dữ liệu thu nhập: " + incError.message);
-                    return;
+                if (incError) { 
+                    console.error("Lỗi tải incomes:", incError.message); 
+                    alert("Lỗi tải dữ liệu thu nhập: " + incError.message); 
+                    return; 
                 }
 
-                // XỬ LÝ LỖI SỐ 3 & SỐ 6: Lọc expenses theo trường ngày thực tế `spent_on` kèm check error
+                // BƯỚC 4: Lấy tổng chi tiêu theo cột spent_on chuẩn xác
                 const { data: expenses, error: expError } = await supabase
                     .from('expenses')
                     .select('amount')
                     .eq('user_id', userId)
                     .gte('spent_on', start)
-                    .lt('spent_on', end);
-
-                if (expError) {
-                    console.error("Lỗi tải expenses:", expError.message);
-                    alert("Lỗi tải dữ liệu chi tiêu: " + expError.message);
-                    return;
-                }
-
-                const totalIncome = incomes ? incomes.reduce((sum, item) => sum + item.amount, 0) : 0;
-                const totalExpense = expenses ? expenses.reduce((sum, item) => sum + item.amount, 0) : 0;
-
-                reportData.push({
-                    name: userName,
-                    income: totalIncome,
-                    expense: totalExpense
-                });
-            }
-
-            renderReportToUI(reportData);
-        }
-
-        function renderReportToUI(data) {
-            const tbody = document.getElementById("family-table-body");
-            tbody.innerHTML = "";
-
-            if (data.length === 0) {
-
-```
-
 Hãy thận trọng khi sử dụng mã.
-
-tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-secondary">Không tìm thấy dữ liệu tài chính gia đình cho tháng này.</td></tr>`;\
-document.getElementById("family-total-expense").innerText = "0đ";\
-document.getElementById("top-spender").textContent = "Không có dữ liệu";\
-return;\
+.lt('spent_on', end);
+if (expError) {
+console.error("Lỗi tải expenses:", expError.message);
+alert("Lỗi tải dữ liệu chi tiêu: " + expError.message);
+return;
 }
-
-let totalFamilyExpense = 0;\
-let maxExpense = -1;\
-let maxSpenderName = "";
-
-data.forEach(member => {\
-totalFamilyExpense += member.expense;\
-const balance = member.income - member.expense;
-
-if (member.expense > maxExpense && member.expense > 0) {\
-maxExpense = member.expense;\
-maxSpenderName = member.name;\
-}
-
-// XỬ LÝ LỖI SỐ 5: Sử dụng hàm escapeHTML() triệt tiêu hoàn toàn nguy cơ tấn công chèn mã độc XSS\
-tbody.innerHTML += \`
-
-${escapeHTML(member.name)}
-
-${member.income.toLocaleString()}đ
-
-${member.expense.toLocaleString()}đ
-
-\\(balance>=0?^{\prime }+^{\prime }:^{\prime \prime }\\){balance.toLocaleString()}đ
-
-\`;
-
+const totalIncome = incomes ? incomes.reduce((sum, item) => sum + item.amount, 0) : 0;
+const totalExpense = expenses ? expenses.reduce((sum, item) => sum + item.amount, 0) : 0;
+reportData.push({
+name: userName,
+income: totalIncome,
+expense: totalExpense
 });
-
-document.getElementById("family-total-expense").innerText = totalFamilyExpense.toLocaleString() + "đ";\
-// XỬ LÝ LỖI SỐ 5: Sử dụng textContent thay vì innerHTML cho các thẻ hiển thị văn bản thuần từ biến người dùng\
-document.getElementById("top-spender").textContent = maxSpenderName ? `${maxSpenderName} (${maxExpense.toLocaleString()}đ)` : "Không có chi tiêu";\
 }
-
+renderReportToUI(reportData);
+}
+function renderReportToUI(data) {
+const tbody = document.getElementById("family-table-body");
+tbody.innerHTML = "";
+if (data.length === 0) {
+tbody.innerHTML = <tr><td colspan="5" class="text-center py-4 text-secondary">Không tìm thấy dữ liệu tài chính gia đình cho tháng này.</td></tr>;
+document.getElementById("family-total-expense").innerText = "0đ";
+document.getElementById("top-spender").textContent = "Không có dữ liệu";
+return;
+}
+let totalFamilyExpense = 0;
+let maxExpense = -1;
+let maxSpenderName = "";
+data.forEach(member => {
+totalFamilyExpense += member.expense;
+const balance = member.income - member.expense;
+if (member.expense > maxExpense && member.expense > 0) {
+maxExpense = member.expense;
+maxSpenderName = member.name;
+}
+tbody.innerHTML += `
+${escapeHTML(member.name)}
+${member.income.toLocaleString()}đ
+${member.expense.toLocaleString()}đ
+\(balance>=0?^{\prime }+^{\prime }:^{\prime \prime }\){balance.toLocaleString()}đ
+`;
+});
+document.getElementById("family-total-expense").innerText = totalFamilyExpense.toLocaleString() + "đ";
+document.getElementById("top-spender").textContent = maxSpenderName ? ${maxSpenderName} (${maxExpense.toLocaleString()}đ) : "Không có chi tiêu";
+}
 document.addEventListener("DOMContentLoaded", verifySecurityAndLoadData);
