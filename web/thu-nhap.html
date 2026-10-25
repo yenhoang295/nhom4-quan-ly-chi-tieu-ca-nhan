@@ -1,233 +1,270 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản Lý Thu Nhập Cá Nhân</title>
-    <link href="https://jsdelivr.net" rel="stylesheet">
-    <link href="https://cloudflare.com" rel="stylesheet">
-    <!-- Nhúng thư viện Supabase chính thức từ CDN đạt chuẩn hệ thống hiện đại -->
-    <script src="https://jsdelivr.net"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Thu nhập cá nhân - Chi tiêu cá nhân, Nhóm 4</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --ink: #14283c; --fog: #e8eef0; --paper: #fff; --line: #c3d0d6; --field: #6f8796;
+      --muted: #4a6070; --teal: #0e7c7b; --teal-dark: #0a5e5d; --crimson: #b4233f; --green: #17794a;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    html { min-height: 100%; }
+    body {
+      margin: 0; min-height: 100vh; color: var(--ink);
+      font-family: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      font-size: 1rem; line-height: 1.55;
+      background-color: var(--fog);
+      background-image:
+        radial-gradient(60rem 28rem at 105% -8%, rgba(14, 124, 123, 0.20), transparent 70%),
+        radial-gradient(48rem 26rem at -10% 108%, rgba(20, 40, 60, 0.12), transparent 70%),
+        linear-gradient(180deg, #eef3f4 0%, #e1ebed 100%);
+      background-attachment: fixed;
+    }
+    .wrap { max-width: 920px; margin: 0 auto; padding: 1.5rem 1.25rem 3rem; }
+    .top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--line); margin-bottom: 1.75rem; }
+    .top h1 { margin: 0; font-size: clamp(1.35rem, 3vw, 1.75rem); font-weight: 800; letter-spacing: -0.01em; }
+    .nav { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; }
+    .nav a { color: var(--teal-dark); font-weight: 500; }
+    .sums { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+    .sum { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 1rem 1.2rem; border-left-width: 5px; }
+    .sum.in { border-left-color: var(--green); }
+    .sum.out { border-left-color: var(--crimson); }
+    .sum.bal { border-left-color: var(--teal); }
+    .sum small { display: block; color: var(--muted); font-size: 0.9rem; }
+    .sum strong { display: block; font-size: 1.55rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+    .sum.bal.neg strong { color: var(--crimson); }
+    .sum.bal.pos strong { color: var(--green); }
+    .grid { display: grid; grid-template-columns: minmax(260px, 340px) 1fr; gap: 1.5rem; align-items: start; }
+    @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
+    .card { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 1.3rem; }
+    .card h2 { margin: 0 0 1rem; font-size: 1.1rem; font-weight: 700; }
+    .field { display: grid; gap: 0.35rem; margin-bottom: 1rem; }
+    label { font-size: 0.9rem; font-weight: 600; }
+    input[type="text"], input[type="number"] {
+      width: 100%; min-height: 44px; padding: 0.5rem 0.75rem; font: inherit; color: var(--ink);
+      background: var(--paper); border: 1px solid var(--field); border-radius: 6px;
+    }
+    input:focus-visible, button:focus-visible, a:focus-visible { outline: 3px solid var(--teal); outline-offset: 2px; }
+    [aria-invalid="true"] { border-color: var(--crimson); }
+    .err { margin: 0; color: var(--crimson); font-size: 0.875rem; }
+    .err:empty { display: none; }
+    .msg { margin: 0 0 1rem; padding: 0.7rem 0.9rem; border-radius: 6px; font-size: 0.95rem; background: #fbe9ec; border: 1px solid #e7b3bd; color: #7f1830; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0.55rem 1.2rem;
+      border: 1px solid var(--teal); border-radius: 6px; background: var(--teal); color: #fff;
+      font: inherit; font-weight: 700; cursor: pointer; width: 100%;
+    }
+    .btn:hover { background: var(--teal-dark); border-color: var(--teal-dark); }
+    .btn:disabled { opacity: 0.6; cursor: progress; }
+    .btn-del { width: auto; min-height: 40px; padding: 0.3rem 0.8rem; background: transparent; color: var(--crimson); border-color: var(--crimson); font-weight: 500; }
+    .btn-del:hover { background: #fbe9ec; border-color: var(--crimson); }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; padding: 0.75rem 0.6rem; border-top: 1px solid var(--line); }
+    thead th { border-top: 0; color: var(--muted); font-size: 0.9rem; font-weight: 600; }
+    td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+    td.amount { color: var(--green); font-weight: 700; }
+    .empty { text-align: center; color: var(--muted); padding: 1.5rem 0.5rem; }
+  </style>
 </head>
-<body class="bg-light">
-    <div class="container py-5">
-        <div class="row mb-4">
-            <div class="col-md-12 d-flex justify-content-between align-items-center">
-                <h2 class="text-primary"><i class="fas fa-wallet me-2"></i>Quản Lý Thu Nhập Cá Nhân (Dữ liệu thật)</h2>
-                <a href="gia-dinh-quan-tri.html" class="btn btn-outline-secondary"><i class="fas fa-users-cog me-2"></i>Trang Quản Trị Của Mẹ</a>
-            </div>
-        </div>
+<body>
+  <div class="wrap">
+    <header class="top">
+      <h1>Thu nhập cá nhân</h1>
+      <nav class="nav" aria-label="Điều hướng">
+        <a href="index.html">Khoản chi</a>
+        <a href="gia-dinh.html">Gia đình</a>
+        <a href="gia-dinh-quan-tri.html">Trang quản trị của Mẹ</a>
+      </nav>
+    </header>
 
-        <!-- Thống kê tổng quan từ Database -->
-        <div class="row mb-4">
-            <div class="col-md-4 mb-3">
-                <div class="card bg-success text-white shadow-sm border-0">
-                    <div class="card-body">
-                        <h6 class="card-title text-uppercase opacity-75 small">Tổng Thu Nhập Thật</h6>
-                        <h3 class="card-text fw-bold" id="total-income">0đ</h3>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4 mb-3">
-                <div class="card bg-danger text-white shadow-sm border-0">
-                    <div class="card-body">
-                        <h6 class="card-title text-uppercase opacity-75 small">Tổng Chi Tiêu Thật</h6>
-                        <h3 class="card-text fw-bold" id="total-expense">0đ</h3>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4 mb-3">
-                <div class="card shadow-sm border-0" id="balance-card">
-                    <div class="card-body">
-                        <h6 class="card-title text-uppercase text-secondary small">Cân Đối Thu Chi (Thu - Chi)</h6>
-                        <h3 class="card-text fw-bold" id="balance-amount">0đ</h3>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <p id="banner" class="msg" role="alert" hidden></p>
 
-        <div class="row">
-            <!-- Form Thêm Thu Nhập Real-time -->
-            <div class="col-md-4 mb-4">
-                <div class="card shadow-sm border-0">
-                    <div class="card-header bg-primary text-white py-3">
-                        <h5 class="card-title mb-0 fs-6"><i class="fas fa-plus-circle me-2"></i>Thêm Khoản Thu Nhập</h5>
-                    </div>
-                    <div class="card-body">
-                        <form id="income-form">
-                            <div class="mb-3">
-                                <label class="form-label small fw-bold">Nguồn Thu Nhập</label>
-                                <input type="text" id="income-source" class="form-control" placeholder="Ví dụ: Lương tháng, Freelance" required>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label small fw-bold">Số Tiền (VND)</label>
-                                <input type="number" id="income-amount" class="form-control" min="1000" placeholder="Nhập số tiền" required>
-                            </div>
-                            <button type="submit" class="btn btn-primary w-100 py-2" id="btn-submit">
-                                <i class="fas fa-save me-2"></i>Lưu Khoản Thu
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </div>
+    <section class="sums" aria-label="Tổng quan">
+      <div class="sum in"><small>Tổng thu nhập</small><strong id="totalIncome">0đ</strong></div>
+      <div class="sum out"><small>Tổng chi tiêu</small><strong id="totalExpense">0đ</strong></div>
+      <div class="sum bal" id="balCard"><small>Cân đối (thu trừ chi)</small><strong id="balance">0đ</strong></div>
+    </section>
 
-            <!-- Danh Sách Thu Nhập Thực Tế Từ Table incomes -->
-            <div class="col-md-8">
-                <div class="card shadow-sm border-0">
-                    <div class="card-header bg-white py-3">
-                        <h5 class="card-title mb-0 text-dark fs-6"><i class="fas fa-list-ul me-2 text-primary"></i>Lịch Sử Thu Nhập Cá Nhân</h5>
-                    </div>
-                    <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle mb-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th class="ps-4">Nguồn Thu</th>
-                                        <th>Số Tiền</th>
-                                        <th class="text-end pe-4">Thao tác</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="income-list">
-                                    <tr>
-                                        <td colspan="3" class="text-center py-4 text-secondary">Đang kết nối cơ sở dữ liệu...</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <div class="grid">
+      <section class="card" aria-labelledby="addTitle">
+        <h2 id="addTitle">Thêm khoản thu nhập</h2>
+        <form id="incomeForm" novalidate>
+          <div class="field">
+            <label for="source">Nguồn thu nhập</label>
+            <input type="text" id="source" maxlength="80" autocomplete="off" placeholder="Ví dụ: Lương tháng, làm thêm" aria-describedby="sourceErr">
+            <p class="err" id="sourceErr"></p>
+          </div>
+          <div class="field">
+            <label for="amount">Số tiền (đồng)</label>
+            <input type="number" id="amount" min="1" step="1" inputmode="numeric" placeholder="Ví dụ: 5000000" aria-describedby="amountErr">
+            <p class="err" id="amountErr"></p>
+          </div>
+          <button type="submit" class="btn" id="saveBtn">Lưu khoản thu</button>
+        </form>
+      </section>
+
+      <section class="card" aria-labelledby="listTitle">
+        <h2 id="listTitle">Lịch sử thu nhập</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Ngày nhận</th><th>Nguồn thu</th><th class="num">Số tiền</th><th class="num">Thao tác</th></tr>
+            </thead>
+            <tbody id="list">
+              <tr><td colspan="4" class="empty">Đang tải dữ liệu...</td></tr>
+            </tbody>
+          </table>
         </div>
+      </section>
     </div>
+  </div>
 
-    <!-- Nhúng file auth.js dùng chung cấu hình của Dev A -->
-    <script src="auth.js"></script>
-    <script>
-        // Sử dụng đối tượng supabase đã được khởi tạo từ file auth.js dùng chung
-        // Đảm bảo không làm hỏng web thầy đang xem theo đúng nguyên tắc dự án
-        
-        async function checkUserAuthentication() {
-            // Guard Clause: Kiểm tra phiên đăng nhập thực tế của người dùng
-            const { data: { user }, error } = await supabase.auth.getUser();
-            if (error || !user) {
-                // Nếu chưa đăng nhập thật, điều hướng an toàn về trang chủ theo đúng quy tắc thiết kế
-                window.location.href = "index.html"; 
-                return null;
-            }
-            return user;
+  <!-- config.js phải đứng trước auth.js -->
+  <script src="config.js"></script>
+  <script src="auth.js"></script>
+  <script>
+    (function () {
+      "use strict";
+      var db = null, user = null;
+      var $ = function (id) { return document.getElementById(id); };
+
+      function showBanner(t) { var b = $("banner"); b.textContent = t || ""; b.hidden = !t; }
+      function money(n) { return Number(n || 0).toLocaleString("vi-VN") + "đ"; }
+      function sum(rows) { return (rows || []).reduce(function (s, r) { return s + (Number(r.amount) || 0); }, 0); }
+      function todayLocal() {
+        var d = new Date();
+        return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+      }
+      function dmy(iso) {
+        if (!iso) return "";
+        var p = String(iso).slice(0, 10).split("-");
+        return p.length === 3 ? p[2] + "/" + p[1] + "/" + p[0] : "";
+      }
+      function setErr(id, text) { $(id).setAttribute("aria-invalid", "true"); $(id + "Err").textContent = text; }
+      function clearErrs() {
+        ["source", "amount"].forEach(function (id) { $(id).removeAttribute("aria-invalid"); $(id + "Err").textContent = ""; });
+      }
+      function cell(text, cls) {
+        var td = document.createElement("td");
+        if (cls) td.className = cls;
+        td.textContent = text; // textContent: chữ người dùng nhập không chạy được như mã
+        return td;
+      }
+
+      async function load() {
+        showBanner("");
+        var inc = await db.from("incomes")
+          .select("id, source, amount, received_on")
+          .eq("user_id", user.id)
+          .order("received_on", { ascending: false })
+          .order("created_at", { ascending: false });
+        if (inc.error) { showBanner("Lỗi tải thu nhập: " + inc.error.message); return; }
+
+        var exp = await db.from("expenses").select("amount").eq("user_id", user.id);
+        if (exp.error) { showBanner("Lỗi tải chi tiêu: " + exp.error.message); return; }
+
+        render(inc.data || [], sum(inc.data), sum(exp.data));
+      }
+
+      function render(rows, totalIn, totalOut) {
+        var body = $("list");
+        body.replaceChildren();
+        if (!rows.length) {
+          var tr0 = document.createElement("tr");
+          var td0 = cell("Bạn chưa có khoản thu nhập nào. Thêm khoản đầu tiên ở khung bên trái.", "empty");
+          td0.colSpan = 4;
+          tr0.appendChild(td0);
+          body.appendChild(tr0);
         }
+        rows.forEach(function (r) {
+          var tr = document.createElement("tr");
+          tr.appendChild(cell(dmy(r.received_on)));
+          tr.appendChild(cell(r.source));
+          tr.appendChild(cell(money(r.amount), "num amount"));
+          var td = document.createElement("td");
+          td.className = "num";
+          var b = document.createElement("button");
+          b.type = "button";
+          b.className = "btn btn-del";
+          b.textContent = "Xóa";
+          b.setAttribute("aria-label", "Xóa khoản thu " + r.source);
+          b.addEventListener("click", function () { removeRow(r.id); });
+          td.appendChild(b);
+          tr.appendChild(td);
+          body.appendChild(tr);
+        });
 
-        async function loadRealtimeFinancialData() {
-            const user = await checkUserAuthentication();
-            if (!user) return;
+        $("totalIncome").textContent = money(totalIn);
+        $("totalExpense").textContent = money(totalOut);
+        var bal = totalIn - totalOut;
+        $("balance").textContent = (bal >= 0 ? "+" : "-") + money(Math.abs(bal));
+        $("balCard").className = "sum bal " + (bal >= 0 ? "pos" : "neg");
+      }
 
-            // 1. Fetch danh sách thu nhập thật thuộc về cá nhân (user_id) từ bảng incomes
-            const { data: incomes, error: incomeError } = await supabase
-                .from('incomes')
-                .select('*')
-                .eq('user_id', user.id)
-                .order('created_at', { ascending: false });
+      async function onSubmit(e) {
+        e.preventDefault();
+        clearErrs();
+        var source = $("source").value.trim();
+        var amount = parseInt($("amount").value, 10);
+        var bad = false;
+        if (!source) { setErr("source", "Nhập nguồn thu nhập."); bad = true; }
+        if (!Number.isFinite(amount) || amount <= 0) { setErr("amount", "Số tiền phải lớn hơn 0."); bad = true; }
+        if (bad) { (bad && !source ? $("source") : $("amount")).focus(); return; }
 
-            if (incomeError) {
-                console.error("Lỗi lấy dữ liệu table incomes:", incomeError.message);
-                return;
-            }
-
-            // 2. Fetch danh sách chi tiêu thật thuộc về cá nhân từ bảng expenses (được bổ sung thêm cột expenses.user_id)
-            const { data: expenses, error: expenseError } = await supabase
-                .from('expenses')
-                .select('amount')
-                .eq('user_id', user.id);
-
-            if (expenseError) {
-                console.error("Lỗi lấy dữ liệu table expenses:", expenseError.message);
-                return;
-            }
-
-            // 3. Tính toán tổng số liệu thật
-            const totalIncome = incomes ? incomes.reduce((sum, item) => sum + item.amount, 0) : 0;
-            const totalExpense = expenses ? expenses.reduce((sum, item) => sum + item.amount, 0) : 0;
-
-            renderDataToUI(incomes, totalIncome, totalExpense);
+        var btn = $("saveBtn");
+        btn.disabled = true;
+        try {
+          var res = await db.from("incomes").insert([{
+            user_id: user.id, source: source, amount: amount, received_on: todayLocal()
+          }]);
+          if (res.error) throw res.error;
+          $("incomeForm").reset();
+          await load();
+        } catch (err) {
+          showBanner("Lỗi lưu dữ liệu: " + err.message);
+        } finally {
+          btn.disabled = false;
         }
+      }
 
-        function renderDataToUI(incomes, totalIncome, totalExpense) {
-            const listContainer = document.getElementById("income-list");
-            listContainer.innerHTML = "";
-
-            if (incomes.length === 0) {
-                listContainer.innerHTML = `<tr><td colspan="3" class="text-center py-4 text-secondary">Bạn chưa có khoản thu nhập nào trong hệ thống.</td></tr>`;
-            } else {
-                incomes.forEach(item => {
-                    listContainer.innerHTML += `
-                        <tr>
-                            <td class="ps-4 fw-medium">${item.source}</td>
-                            <td class="text-success fw-bold">${item.amount.toLocaleString()}đ</td>
-                            <td class="text-end pe-4">
-                                <button class="btn btn-sm btn-outline-danger" onclick="executeDeleteIncome('${item.id}')">
-                                    <i class="fas fa-trash-alt"></i>
-                                </button>
-                            </td>
-                        </tr>`;
-                });
-            }
-
-            // Hiển thị số liệu lên các thẻ tổng quan
-            document.getElementById("total-income").innerText = totalIncome.toLocaleString() + "đ";
-            document.getElementById("total-expense").innerText = totalExpense.toLocaleString() + "đ";
-            
-            const balance = totalIncome - totalExpense;
-            const balanceAmountNode = document.getElementById("balance-amount");
-            const balanceCardNode = document.getElementById("balance-card");
-            
-            balanceAmountNode.innerText = (balance >= 0 ? "+" : "") + balance.toLocaleString() + "đ";
-            if (balance >= 0) {
-                balanceAmountNode.className = "card-text text-success fw-bold";
-                balanceCardNode.className = "card shadow-sm border-0 border-start border-success border-4";
-            } else {
-                balanceAmountNode.className = "card-text text-danger fw-bold";
-                balanceCardNode.className = "card shadow-sm border-0 border-start border-danger border-4";
-            }
+      async function removeRow(id) {
+        if (!confirm("Bạn có chắc muốn xóa khoản thu nhập này không?")) return;
+        try {
+          var res = await db.from("incomes").delete().eq("id", id).eq("user_id", user.id);
+          if (res.error) throw res.error;
+          await load();
+        } catch (err) {
+          showBanner("Lỗi xóa dữ liệu: " + err.message);
         }
+      }
 
-        // Đăng ký sự kiện submit form thêm thu nhập thật vào Supabase
-        document.getElementById("income-form").addEventListener("submit", async function(e) {
-            e.preventDefault();
-            const btnSubmit = document.getElementById("btn-submit");
-            btnSubmit.disabled = true; // Chặn đúp chuột liên tục tạo dữ liệu rác
-            
-            try {
-                const user = await checkUserAuthentication();
-if (!user) return;
-const source = document.getElementById("income-source").value;
-const amount = parseInt(document.getElementById("income-amount").value);
-const { error } = await supabase
-.from('incomes')
-.insert([{ source: source, amount: amount, user_id: user.id }]);
-if (error) throw error;
-document.getElementById("income-form").reset();
-await loadRealtimeFinancialData();
-} catch (err) {
-alert("Lỗi lưu dữ liệu: " + err.message);
-} finally {
-btnSubmit.disabled = false;
-}
-});
-// Hàm xóa khoản thu nhập thật ra khỏi cơ sở dữ liệu
-async function executeDeleteIncome(id) {
-if (confirm("Bạn có chắc chắn muốn xóa khoản thu nhập này khỏi hệ thống không?")) {
-try {
-const { error } = await supabase
-.from('incomes')
-.delete()
-.eq('id', id);
-if (error) throw error;
-await loadRealtimeFinancialData();
-} catch (err) {
-alert("Lỗi xóa dữ liệu: " + err.message);
-}
-}
-}
-// Khởi chạy ứng dụng và lắng nghe sự kiện từ trang web
-document.addEventListener("DOMContentLoaded", loadRealtimeFinancialData);
-
+      async function init() {
+        $("incomeForm").addEventListener("submit", onSubmit);
+        if (!window.Auth || !Auth.isConfigured()) {
+          showBanner("Chưa cấu hình Supabase. Kiểm tra file web/config.js.");
+          return;
+        }
+        try {
+          db = Auth.getClient();
+          var session = await Auth.requireLogin("dang-nhap.html");
+          if (!session) return;
+          user = session.user;
+          Auth.onSignedOut(function () { window.location.replace("dang-nhap.html"); });
+          await load();
+        } catch (err) {
+          showBanner(err.message);
+        }
+      }
+      init();
+    })();
+  </script>
+</body>
+</html>
