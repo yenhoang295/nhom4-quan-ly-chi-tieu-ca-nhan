@@ -8,15 +8,21 @@
     income: '<circle cx="12" cy="12" r="9"/><path d="M12 16V8"/><path d="M8.5 11.5L12 8l3.5 3.5"/>',
     family: '<circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.5"/><path d="M17 14c2.4 0 4 1.8 4 4.5"/>',
     admin: '<path d="M12 3l8 3v6c0 4.5-3.3 7.8-8 9-4.7-1.2-8-4.5-8-9V6z"/>',
-    demo: '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>'
+    demo: '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+        cat: '<path d="M4 4h7v7H4z"/><path d="M13 4h7v7h-7z"/><path d="M4 13h7v7H4z"/><path d="M13 13h7v7h-7z"/>',
+    report: '<path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/>',
+    settings: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/>'
   };
 
-  var PAGES = [
+    var PAGES = [
     { href: "trang-chu.html", label: "Trang chủ", icon: "home" },
-    { href: "index.html", label: "Khoản chi", icon: "expense" },
     { href: "thu-nhap.html", label: "Thu nhập", icon: "income" },
+    { href: "index.html", label: "Chi tiêu", icon: "expense" },
+    { href: "danh-muc.html", label: "Danh mục", icon: "cat" },
+    { href: "bao-cao.html", label: "Báo cáo", icon: "report" },
     { href: "gia-dinh.html", label: "Gia đình", icon: "family" },
     { href: "gia-dinh-quan-tri.html", label: "Quản trị", icon: "admin", admin: true },
+    { href: "cai-dat.html", label: "Cài đặt", icon: "settings" },
     { href: "demo.html", label: "Xem thử", icon: "demo" }
   ];
 
