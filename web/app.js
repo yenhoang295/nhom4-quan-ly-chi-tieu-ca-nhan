@@ -110,6 +110,7 @@
     const { data, error } = await db
       .from("expenses")
       .select("id, spent_on, amount, note, category_id, categories(name)")
+      .eq("user_id", state.userId)
       .gte("spent_on", start)
       .lt("spent_on", next)
       .order("spent_on", { ascending: false })
@@ -265,6 +266,7 @@
     btn.disabled = true;
     try {
       const { error } = await db.from("expenses").insert({
+        user_id: state.userId,
         spent_on: spentOn,
         amount: amount,
         category_id: Number(categoryId),
@@ -356,7 +358,7 @@
   }
 
   /* ---------- Khởi động ---------- */
-  function init() {
+    async function init() {
     state.month = todayISO().slice(0, 7);
     $("month").value = state.month;
     $("spentOn").value = todayISO();
@@ -378,7 +380,11 @@
       showBanner("Không tải được thư viện Supabase. Kiểm tra kết nối mạng và tải lại trang.");
       return;
     }
-    db = window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_KEY);
+        db = Auth.getClient();
+    const session = await Auth.requireLogin("dang-nhap.html");
+    if (!session) return;
+    state.userId = session.user.id;
+    Auth.onSignedOut(function () { window.location.replace("dang-nhap.html"); });
     reload();
   }
 
