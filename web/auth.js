@@ -99,11 +99,11 @@
     return data;
   }
 
-  // Dùng ở đầu các trang cần đăng nhập. Chưa đăng nhập thì chuyển về trang chủ.
+   // Dùng ở đầu các trang cần đăng nhập. Chưa đăng nhập thì chuyển về trang đăng nhập.
   async function requireLogin(loginUrl) {
     const session = await getSession();
     if (!session) {
-      window.location.replace(loginUrl || "trang-chu.html");
+      window.location.replace(loginUrl || "dang-nhap.html");
       return null;
     }
     return session;

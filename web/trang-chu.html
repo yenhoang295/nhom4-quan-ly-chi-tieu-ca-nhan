@@ -19,7 +19,6 @@ a{color:inherit}
 h1{font-size:clamp(2rem,4.5vw,3.1rem);line-height:1.12;margin:.5rem 0 1rem;letter-spacing:-.02em;max-width:14ch}
 .lead{color:var(--muted);font-size:1.08rem;max-width:46ch;margin:0 0 2rem}
 
-/* Bảng minh họa: điểm nhấn của trang */
 .ledger{background:var(--card);border:2px solid var(--ink);border-radius:6px;padding:1.2rem 1.3rem;max-width:520px}
 .ledger-head{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid var(--line);padding-bottom:.7rem;margin-bottom:.9rem}
 .ledger-head b{font-size:1.9rem;color:var(--spend);letter-spacing:-.02em}
@@ -37,28 +36,22 @@ h1{font-size:clamp(2rem,4.5vw,3.1rem);line-height:1.12;margin:.5rem 0 1rem;lette
 .features b{display:block}
 .features span{color:var(--muted);font-size:.95rem}
 
-/* Đăng nhập */
-.auth{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:1.6rem;position:sticky;top:1rem}
-.tabs{display:grid;grid-template-columns:1fr 1fr;border-bottom:2px solid var(--line);margin-bottom:1.3rem}
-.tabs button{background:none;border:0;padding:.7rem;font:inherit;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px}
-.tabs button[aria-selected="true"]{color:var(--ink);border-color:var(--ink)}
-label{display:block;font-weight:600;font-size:.92rem;margin:0 0 .3rem}
-.field{margin-bottom:1rem}
-input{width:100%;padding:.7rem .8rem;border:1px solid #9fb2ae;border-radius:6px;font:inherit;background:#fff;color:var(--ink)}
-input[aria-invalid="true"]{border-color:var(--spend)}
-.err{color:var(--spend);font-size:.85rem;min-height:1.1em;margin:.25rem 0 0}
-.btn{width:100%;padding:.8rem;border:0;border-radius:6px;background:var(--ink);color:#fff;font:inherit;font-weight:700;cursor:pointer}
-.btn:hover{background:#0a2c2d}
-.msg{margin:.9rem 0 0;font-size:.92rem;min-height:1.3em}
-.msg.ok{color:#176b3a}.msg.bad{color:var(--spend)}
-.hint{font-size:.85rem;color:var(--muted);margin-top:1rem}
-.hide{display:none}
+/* Khung bắt đầu (thay cho form đăng nhập cũ) */
+.start{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:1.6rem;position:sticky;top:1rem}
+.start h2{margin:0 0 .4rem;font-size:1.35rem}
+.start p{margin:0 0 1.3rem;color:var(--muted)}
+.btn{display:block;width:100%;padding:.85rem;border-radius:6px;font:inherit;font-weight:700;text-align:center;text-decoration:none;border:2px solid var(--ink)}
+.btn-main{background:var(--ink);color:#fff}
+.btn-main:hover{background:#0a2c2d}
+.btn-alt{background:transparent;color:var(--ink);margin-top:.75rem}
+.btn-alt:hover{background:#e3ebe9}
+.hint{font-size:.85rem;color:var(--muted);margin:1rem 0 0}
 :focus-visible{outline:3px solid var(--focus);outline-offset:2px}
 footer{max-width:1080px;margin:0 auto;padding:0 1.5rem 2rem;color:var(--muted);font-size:.88rem}
 
 @media (max-width:860px){
   .wrap{grid-template-columns:1fr;gap:2rem}
-  .auth{position:static;order:-1}
+  .start{position:static;order:-1}
   h1{max-width:none}
 }
 @media (prefers-reduced-motion:reduce){.bar i{animation:none;width:var(--w)}}
@@ -87,120 +80,19 @@ footer{max-width:1080px;margin:0 auto;padding:0 1.5rem 2rem;color:var(--muted);f
       <li><b>Thêm khoản chi</b><span>Chọn ngày, nhập số tiền và danh mục, thêm ghi chú nếu cần.</span></li>
       <li><b>Lọc theo danh mục</b><span>Chỉ xem các khoản ăn uống, học tập hay bất kỳ danh mục nào bạn chọn.</span></li>
       <li><b>Xem tổng theo tháng</b><span>Tổng chi và tỷ lệ từng danh mục cập nhật ngay khi có khoản mới.</span></li>
+      <li><b>Chia sẻ trong gia đình</b><span>Mẹ tạo gia đình, các con tham gia bằng mã mời. Mẹ chỉ xem, không sửa hay xóa.</span></li>
     </ul>
   </section>
 
-  <section class="auth" aria-label="Đăng nhập">
-    <div class="tabs" role="tablist">
-      <button role="tab" id="tab-login" aria-selected="true" aria-controls="form-login">Đăng nhập</button>
-      <button role="tab" id="tab-reg" aria-selected="false" aria-controls="form-reg">Tạo tài khoản</button>
-    </div>
-
-    <form id="form-login" novalidate>
-      <div class="field">
-        <label for="l-email">Email</label>
-        <input id="l-email" type="email" autocomplete="email" placeholder="ten@email.com">
-        <p class="err" id="l-email-err"></p>
-      </div>
-      <div class="field">
-        <label for="l-pass">Mật khẩu</label>
-        <input id="l-pass" type="password" autocomplete="current-password">
-        <p class="err" id="l-pass-err"></p>
-      </div>
-      <button class="btn" type="submit">Đăng nhập</button>
-      <p class="msg" id="l-msg" role="status"></p>
-    </form>
-
-    <form id="form-reg" class="hide" novalidate>
-      <div class="field">
-        <label for="r-name">Tên hiển thị</label>
-        <input id="r-name" type="text" autocomplete="name">
-        <p class="err" id="r-name-err"></p>
-      </div>
-      <div class="field">
-        <label for="r-email">Email</label>
-        <input id="r-email" type="email" autocomplete="email" placeholder="ten@email.com">
-        <p class="err" id="r-email-err"></p>
-      </div>
-      <div class="field">
-        <label for="r-pass">Mật khẩu (ít nhất 6 ký tự)</label>
-        <input id="r-pass" type="password" autocomplete="new-password">
-        <p class="err" id="r-pass-err"></p>
-      </div>
-      <button class="btn" type="submit">Tạo tài khoản</button>
-      <p class="msg" id="r-msg" role="status"></p>
-    </form>
-
-    <p class="hint">Chưa muốn đăng nhập? <a href="index.html">Vào xem trang quản lý khoản chi</a></p>
+  <section class="start" aria-labelledby="batdau">
+    <h2 id="batdau">Bắt đầu</h2>
+    <p>Đăng nhập hoặc tạo tài khoản để ghi chi tiêu của riêng bạn.</p>
+    <a class="btn btn-main" href="dang-nhap.html">Đăng nhập hoặc tạo tài khoản</a>
+    <a class="btn btn-alt" href="demo.html">Xem thử, không cần đăng nhập</a>
+    <p class="hint">Bản xem thử dùng dữ liệu minh họa, bạn chỉ xem được, không thêm hay sửa.</p>
   </section>
 </main>
 
 <footer>Đồ án nhóm 4 – Ứng dụng quản lý chi tiêu cá nhân.</footer>
-
-<script>
-(function () {
-  var APP_URL = "index.html"; // trang quản lý khoản chi sau khi đăng nhập
-
-  // Chuyển tab
-  var tabs = { login: ["tab-login", "form-login"], reg: ["tab-reg", "form-reg"] };
-  function show(which) {
-    Object.keys(tabs).forEach(function (k) {
-      var on = k === which;
-      document.getElementById(tabs[k][0]).setAttribute("aria-selected", on);
-      document.getElementById(tabs[k][1]).classList.toggle("hide", !on);
-    });
-  }
-  document.getElementById("tab-login").onclick = function () { show("login"); };
-  document.getElementById("tab-reg").onclick = function () { show("reg"); };
-
-  function setErr(id, text) {
-    var input = document.getElementById(id);
-    document.getElementById(id + "-err").textContent = text || "";
-    input.setAttribute("aria-invalid", text ? "true" : "false");
-    return !text;
-  }
-  function checkEmail(id) {
-    var v = document.getElementById(id).value.trim();
-    if (!v) return setErr(id, "Nhập email.");
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return setErr(id, "Email chưa đúng, ví dụ: ten@email.com.");
-    return setErr(id, "");
-  }
-  function checkPass(id) {
-    var v = document.getElementById(id).value;
-    if (!v) return setErr(id, "Nhập mật khẩu.");
-    if (id === "r-pass" && v.length < 6) return setErr(id, "Mật khẩu cần ít nhất 6 ký tự.");
-    return setErr(id, "");
-  }
-  function say(id, text, ok) {
-    var el = document.getElementById(id);
-    el.textContent = text;
-    el.className = "msg " + (ok ? "ok" : "bad");
-  }
-
-  document.getElementById("form-login").addEventListener("submit", function (e) {
-    e.preventDefault();
-    var ok = checkEmail("l-email") & checkPass("l-pass");
-    if (!ok) return say("l-msg", "Kiểm tra lại các ô được đánh dấu.", false);
-
-    // TODO: nối Supabase Auth khi nhóm sẵn sàng, ví dụ:
-    // var { error } = await supabase.auth.signInWithPassword({ email, password });
-    // if (error) return say("l-msg", "Email hoặc mật khẩu chưa đúng.", false);
-    say("l-msg", "Đăng nhập thành công. Đang chuyển trang…", true);
-    setTimeout(function () { location.href = APP_URL; }, 700);
-  });
-
-  document.getElementById("form-reg").addEventListener("submit", function (e) {
-    e.preventDefault();
-    var okName = document.getElementById("r-name").value.trim()
-      ? setErr("r-name", "") : setErr("r-name", "Nhập tên hiển thị.");
-    var ok = okName & checkEmail("r-email") & checkPass("r-pass");
-    if (!ok) return say("r-msg", "Kiểm tra lại các ô được đánh dấu.", false);
-
-    // TODO: await supabase.auth.signUp({ email, password });
-    say("r-msg", "Đã tạo tài khoản. Bạn có thể đăng nhập.", true);
-    setTimeout(function () { show("login"); }, 900);
-  });
-})();
-</script>
 </body>
 </html>

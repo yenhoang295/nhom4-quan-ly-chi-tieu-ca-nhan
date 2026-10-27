@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Xem thử - Chi tiêu cá nhân, Nhóm 4</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#14283c;--fog:#e8eef0;--paper:#fff;--line:#c3d0d6;--muted:#4a6070;--teal:#0e7c7b;--teal-dark:#0a5e5d;--crimson:#b4233f}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--fog);color:var(--ink);font-family:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.55}
+.wrap{max-width:760px;margin:0 auto;padding:1.5rem 1.25rem 3rem}
+.brand{display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-bottom:1.25rem}
+.brand strong{font-size:1.15rem;font-weight:800}
+a{color:var(--teal-dark);font-weight:500}
+.banner{background:#fff6dd;border:1px solid #e5c76b;border-radius:6px;padding:.7rem .9rem;margin:0 0 1.25rem;font-size:.95rem}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:1.4rem;margin-bottom:1.25rem}
+h1{margin:0 0 .3rem;font-size:1.6rem;font-weight:800}
+h2{margin:0 0 .8rem;font-size:1.1rem;font-weight:700}
+.total{font-size:2rem;font-weight:800;color:var(--crimson);letter-spacing:-.02em}
+.muted{color:var(--muted);font-size:.92rem}
+.cat{display:grid;grid-template-columns:7rem 1fr 7.5rem;gap:.7rem;align-items:center;padding:.3rem 0;font-size:.93rem}
+.bar{height:10px;background:#e3ebe9;border-radius:2px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--teal)}
+.cat em{font-style:normal;text-align:right;font-variant-numeric:tabular-nums}
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.93rem}
+th,td{text-align:left;padding:.5rem .6rem;border-bottom:1px solid var(--line)}
+th{font-weight:700}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:.55rem 1.2rem;border-radius:6px;background:var(--teal);color:#fff;font-weight:700;text-decoration:none}
+.btn:hover{background:var(--teal-dark)}
+.err{background:#fbe9ec;border:1px solid #e7b3bd;color:#7f1830;border-radius:6px;padding:.7rem .9rem}
+:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
+@media (max-width:520px){.cat{grid-template-columns:5.5rem 1fr 6.5rem}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">
+    <strong>Chi tiêu cá nhân</strong>
+    <a href="trang-chu.html">Về trang giới thiệu</a>
+  </div>
+
+  <p class="banner" role="note">Đây là bản xem thử với dữ liệu minh họa. Bạn chỉ xem được, không thêm hay sửa. Tạo tài khoản để ghi chi tiêu của riêng bạn.</p>
+
+  <p id="status" class="muted" role="status">Đang tải dữ liệu minh họa…</p>
+  <p id="error" class="err" role="alert" hidden></p>
+
+  <main id="content" hidden>
+    <section class="card" aria-labelledby="t1">
+      <h1 id="t1">Tổng chi minh họa</h1>
+      <div class="total" id="total"></div>
+      <div class="muted" id="count"></div>
+    </section>
+
+    <section class="card" aria-labelledby="t2">
+      <h2 id="t2">Theo danh mục</h2>
+      <div id="cats"></div>
+    </section>
+
+    <section class="card" aria-labelledby="t3">
+      <h2 id="t3">Các khoản chi</h2>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Ngày</th><th>Danh mục</th><th>Ghi chú</th><th class="num">Số tiền</th></tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <a class="btn" href="dang-nhap.html">Đăng nhập hoặc tạo tài khoản</a>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="auth.js"></script>
+<script>
+(function () {
+  "use strict";
+  var $ = function (id) { return document.getElementById(id); };
+
+  function money(n) { return Number(n || 0).toLocaleString("vi-VN") + " ₫"; }
+  function dateVi(s) { var p = String(s || "").split("-"); return p.length === 3 ? p[2] + "/" + p[1] + "/" + p[0] : s; }
+  function cell(tr, text, cls) {
+    var td = document.createElement("td");
+    td.textContent = text;
+    if (cls) td.className = cls;
+    tr.appendChild(td);
+  }
+  function fail(text) {
+    $("status").hidden = true;
+    $("error").textContent = text;
+    $("error").hidden = false;
+  }
+
+  async function init() {
+    var data;
+    try {
+      var res = await Auth.getClient()
+        .from("demo_expenses")
+        .select("id, spent_on, amount, note, category_name")
+        .order("spent_on", { ascending: false });
+      if (res.error) throw res.error;
+      data = res.data || [];
+    } catch (err) {
+      return fail("Không tải được dữ liệu xem thử: " + (err.message || "lỗi không rõ") + ". Tải lại trang hoặc đăng nhập để dùng bản thật.");
+    }
+    if (!data.length) return fail("Chưa có dữ liệu minh họa để hiển thị.");
+
+    var total = 0, byCat = {};
+    data.forEach(function (r) {
+      var amt = Number(r.amount) || 0, name = r.category_name || "Khác";
+      total += amt;
+      byCat[name] = (byCat[name] || 0) + amt;
+    });
+
+    $("total").textContent = money(total);
+    $("count").textContent = data.length + " khoản chi";
+
+    var cats = $("cats");
+    Object.keys(byCat).sort(function (a, b) { return byCat[b] - byCat[a]; }).forEach(function (name) {
+      var row = document.createElement("div"); row.className = "cat";
+      var label = document.createElement("span"); label.textContent = name;
+      var bar = document.createElement("div"); bar.className = "bar";
+      var fill = document.createElement("i"); fill.style.width = (total ? Math.round(byCat[name] / total * 100) : 0) + "%";
+      bar.appendChild(fill);
+      var val = document.createElement("em"); val.textContent = money(byCat[name]);
+      row.appendChild(label); row.appendChild(bar); row.appendChild(val);
+      cats.appendChild(row);
+    });
+
+    var tbody = $("rows");
+    data.forEach(function (r) {
+      var tr = document.createElement("tr");
+      cell(tr, dateVi(r.spent_on));
+      cell(tr, r.category_name || "Khác");
+      cell(tr, r.note || "");
+      cell(tr, money(r.amount), "num");
+      tbody.appendChild(tr);
+    });
+
+    $("status").hidden = true;
+    $("content").hidden = false;
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
