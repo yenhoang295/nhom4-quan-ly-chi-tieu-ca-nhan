@@ -1,0 +1,151 @@
+/* theme.css: giao diện "Thành phố đêm" dùng chung cho mọi trang trong thư mục web.
+   Cách dùng: thêm đúng 1 dòng này vào <head> của MỖI trang, đặt SAU thẻ </style> cuối cùng:
+     <link rel="stylesheet" href="theme.css">
+   Cần thêm file img/thanh-pho-dem.svg (nền thành phố). File này ghi đè biến màu cũ của từng trang. */
+
+@import url("https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;700;800&display=swap");
+
+:root {
+  /* Bảng màu: bầu trời đêm tím, ánh hồng ở chân trời, cửa sổ vàng */
+  --bg: #0b0a26;
+  --sky-top: #0a0b2e;
+  --sky-mid: #2b1b6b;
+  --sky-low: #7a2f8f;
+  --sky-glow: #d9467f;
+  --surface: rgba(21, 16, 62, 0.78);     /* thẻ, kính mờ */
+  --surface-2: rgba(52, 38, 117, 0.6);
+  --bg-soft: rgba(9, 7, 33, 0.72);        /* ô nhập liệu */
+  --text: #f0ecff;
+  --text-muted: #b9b0e0;
+  --border: rgba(160, 140, 235, 0.28);
+  --income: #3ee0b0;
+  --spend: #ff7a98;
+  --balance: #7aa7ff;
+  --coin: #ffd27a;
+  --link: #8fe3ff;
+
+  /* Ghi đè tên biến cũ đang dùng trong từng trang */
+  --ink: var(--text);
+  --card: var(--surface);
+  --paper: var(--surface);
+  --fog: var(--bg);
+  --line: var(--border);
+  --field: #6f63b8;
+  --muted: var(--text-muted);
+  --teal: #6d3fd8;
+  --teal-dark: #5429b0;
+  --crimson: var(--spend);
+  --ok: #9af0d6;
+  --focus: #8fe3ff;
+
+  color-scheme: dark;
+  font-family: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+html { color-scheme: dark; }
+
+body {
+  background: var(--bg) !important;
+  color: var(--text);
+  font-family: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  position: relative;
+}
+
+/* Nền cố định: sao, bầu trời, thành phố. Nằm dưới mọi nội dung. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    url("img/thanh-pho-dem.svg") repeat-x bottom center / auto 260px,
+    radial-gradient(1.5px 1.5px at 12% 14%, #fff, transparent),
+    radial-gradient(1px 1px at 27% 32%, #dcd6ff, transparent),
+    radial-gradient(1.5px 1.5px at 41% 9%, #fff, transparent),
+    radial-gradient(1px 1px at 58% 24%, #dcd6ff, transparent),
+    radial-gradient(1.5px 1.5px at 73% 12%, #fff, transparent),
+    radial-gradient(1px 1px at 86% 30%, #dcd6ff, transparent),
+    radial-gradient(1px 1px at 94% 8%, #fff, transparent),
+    radial-gradient(1px 1px at 6% 40%, #dcd6ff, transparent),
+    linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 45%, var(--sky-low) 78%, var(--sky-glow) 100%);
+}
+
+/* Khung, thẻ: kính mờ để chữ luôn đọc được trên nền */
+.card, .start, .ledger {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: 0 12px 32px rgba(4, 2, 24, 0.45);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+/* Liên kết */
+a:not(.btn) { color: var(--link); }
+.brand a, .link-btn, .btn-outline { color: var(--link); }
+.btn-outline { border-color: var(--link); }
+.btn-outline:hover { background: var(--surface-2); color: var(--link); }
+
+/* Nút chính */
+.btn-main {
+  background: linear-gradient(90deg, #6d3fd8, #b83a9e);
+  border-color: transparent;
+  color: #fff;
+}
+.btn-main:hover { background: linear-gradient(90deg, #5a30bd, #9f2f87); border-color: transparent; }
+.btn-alt { color: var(--text); border-color: var(--field); }
+.btn-alt:hover { background: var(--surface-2); }
+
+/* Ô nhập */
+input, select, textarea {
+  background: var(--bg-soft);
+  color: var(--text);
+  border-color: var(--field);
+}
+input::placeholder, textarea::placeholder { color: #8c82c4; }
+input:disabled, select:disabled { opacity: 0.6; }
+[aria-invalid="true"] { border-color: var(--spend) !important; }
+
+/* Bảng */
+table { color: var(--text); }
+th { color: var(--text-muted); }
+th, td { border-bottom-color: var(--border); }
+tbody tr:hover { background: var(--surface-2); }
+
+/* Thanh tỉ lệ theo danh mục */
+.bar { background: rgba(255, 255, 255, 0.12); }
+.bar i { background: var(--balance); }
+.row:first-of-type .bar i { background: var(--spend); }
+
+/* Số tiền */
+.total, .ledger-head b { color: var(--spend); }
+.logo { color: #1a1303; }
+
+/* Thông báo */
+.msg.bad, .err[role="alert"] {
+  background: rgba(86, 18, 50, 0.85);
+  border: 1px solid #a8406a;
+  color: #ffc2d2;
+}
+.msg.good {
+  background: rgba(10, 70, 62, 0.85);
+  border: 1px solid #1f8a76;
+  color: #a5f3dc;
+}
+.banner {
+  background: rgba(86, 64, 14, 0.85);
+  border: 1px solid #9a7d26;
+  color: #ffe9a8;
+}
+.err { color: #ff9db3; }
+
+/* Viền khi dùng bàn phím */
+:focus-visible { outline: 3px solid var(--focus) !important; outline-offset: 2px; }
+
+/* Thanh cuộn */
+* { scrollbar-color: #4a3b94 transparent; }
+
+/* Màn hình nhỏ: thành phố thấp hơn để không che nội dung */
+@media (max-width: 600px) {
+  body::before { background-size: auto 150px, auto, auto, auto, auto, auto, auto, auto, auto, auto; }
+}
