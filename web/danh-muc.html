@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Danh mục - Chi tiêu cá nhân, Nhóm 4</title>
+  <link rel="stylesheet" href="theme.css">
+</head>
+<body>
+  <main class="pg">
+    <header class="pg-head">
+      <div>
+        <h1>Danh mục</h1>
+        <p class="pg-sub">Nhóm các khoản chi của bạn. Số liệu là chi tiêu trong tháng này.</p>
+      </div>
+    </header>
+
+    <p id="msg" class="msg bad" role="alert" hidden></p>
+
+    <div class="pg-grid">
+      <section class="pg-card" aria-labelledby="addT">
+        <h2 id="addT">Tạo danh mục</h2>
+        <form id="catForm" novalidate>
+          <div class="pg-field">
+            <label for="catName">Tên danh mục</label>
+            <input type="text" id="catName" maxlength="100" autocomplete="off" placeholder="Ví dụ: Du lịch" aria-describedby="catErr">
+            <p class="pg-err" id="catErr"></p>
+          </div>
+          <button type="submit" class="pg-btn" id="catBtn">Tạo danh mục</button>
+        </form>
+      </section>
+
+      <section class="pg-card" aria-labelledby="listT">
+        <h2 id="listT">Tất cả danh mục</h2>
+        <ul class="pg-list" id="list"></ul>
+        <p class="pg-empty" id="empty" hidden>Chưa có danh mục nào. Tạo danh mục đầu tiên ở khung bên trái.</p>
+      </section>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="auth.js"></script>
+  <script>
+    (function () {
+      "use strict";
+      var $ = function (id) { return document.getElementById(id); };
+      var db = null, uid = null;
+
+      function money(n) { return Number(n || 0).toLocaleString("vi-VN") + "đ"; }
+      function thisMonth() {
+        var d = new Date();
+        return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+      }
+      function range(v) {
+        var p = v.split("-"), y = Number(p[0]), m = Number(p[1]);
+        return { start: v + "-01", next: m === 12 ? (y + 1) + "-01-01" : y + "-" + String(m + 1).padStart(2, "0") + "-01" };
+      }
+      function show(text) { var m = $("msg"); m.textContent = text || ""; m.hidden = !text; }
+      function el(tag, cls, text) {
+        var e = document.createElement(tag);
+        if (cls) e.className = cls;
+        if (text !== undefined) e.textContent = text; // textContent: chữ người dùng nhập không chạy được như mã
+        return e;
+      }
+
+      async function load() {
+        show("");
+        var cats = await db.from("categories").select("id, name").order("name");
+        if (cats.error) throw cats.error;
+        var r = range(thisMonth());
+        var exp = await db.from("expenses").select("category_id, amount")
+          .eq("user_id", uid).gte("spent_on", r.start).lt("spent_on", r.next);
+        if (exp.error) throw exp.error;
+
+        var count = {}, total = {};
+        (exp.data || []).forEach(function (e) {
+          count[e.category_id] = (count[e.category_id] || 0) + 1;
+          total[e.category_id] = (total[e.category_id] || 0) + (Number(e.amount) || 0);
+        });
+
+        var ul = $("list");
+        ul.replaceChildren();
+        (cats.data || []).forEach(function (c) {
+          var li = el("li");
+          var left = el("div", "", c.name);
+          left.append(el("small", "", (count[c.id] || 0) + " khoản chi tháng này"));
+          li.append(left, el("span", "amt", money(total[c.id] || 0)));
+          ul.append(li);
+        });
+        $("empty").hidden = (cats.data || []).length > 0;
+      }
+
+      async function onSubmit(e) {
+        e.preventDefault();
+        $("catErr").textContent = "";
+        $("catName").removeAttribute("aria-invalid");
+        var name = $("catName").value.trim();
+        if (!name) {
+          $("catName").setAttribute("aria-invalid", "true");
+          $("catErr").textContent = "Nhập tên danh mục.";
+          $("catName").focus();
+          return;
+        }
+        var btn = $("catBtn");
+        btn.disabled = true;
+        try {
+          var res = await db.from("categories").insert({ name: name });
+          if (res.error) {
+            if (res.error.code === "23505") {
+              $("catName").setAttribute("aria-invalid", "true");
+              $("catErr").textContent = "Danh mục này đã có. Đặt tên khác.";
+              return;
+            }
+            throw res.error;
+          }
+          $("catName").value = "";
+          await load();
+        } catch (err) {
+          show("Không lưu được: " + ((err && err.message) || "lỗi không rõ"));
+        } finally {
+          btn.disabled = false;
+        }
+      }
+
+      async function init() {
+        $("catForm").addEventListener("submit", onSubmit);
+        if (!window.Auth || !Auth.isConfigured()) {
+          show("Chưa cấu hình Supabase. Kiểm tra file web/config.js.");
+          return;
+        }
+        try {
+          db = Auth.getClient();
+          var session = await Auth.requireLogin("dang-nhap.html");
+          if (!session) return;
+          uid = session.user.id;
+          Auth.onSignedOut(function () { window.location.replace("dang-nhap.html"); });
+          await load();
+        } catch (err) {
+          show((err && err.message) || "Có lỗi xảy ra.");
+        }
+      }
+      init();
+    })();
+  </script>
+<script src="nav.js"></script></body>
+</html>

@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Báo cáo - Chi tiêu cá nhân, Nhóm 4</title>
+  <link rel="stylesheet" href="theme.css">
+</head>
+<body>
+  <main class="pg">
+    <header class="pg-head">
+      <div>
+        <h1>Báo cáo</h1>
+        <p class="pg-sub">Thu, chi và còn lại của bạn theo tháng.</p>
+      </div>
+      <input type="month" id="month" aria-label="Chọn tháng">
+    </header>
+
+    <p id="msg" class="msg bad" role="alert" hidden></p>
+
+    <section class="pg-stats" aria-label="Tổng quan">
+      <div class="pg-card pg-stat in"><small>Tổng thu nhập</small><strong id="sIn">0đ</strong></div>
+      <div class="pg-card pg-stat out"><small>Tổng chi tiêu</small><strong id="sOut">0đ</strong></div>
+      <div class="pg-card pg-stat bal" id="sBalCard"><small>Còn lại</small><strong id="sBal">0đ</strong></div>
+    </section>
+
+    <div class="pg-grid-2">
+      <section class="pg-card" aria-labelledby="t1">
+        <h2 id="t1">Chi tiêu theo danh mục</h2>
+        <div id="cats"></div>
+        <p class="pg-empty" id="catsEmpty" hidden>Tháng này chưa có khoản chi nào.</p>
+      </section>
+
+      <section class="pg-card" aria-labelledby="t2">
+        <h2 id="t2">Thu nhập theo nguồn</h2>
+        <div id="srcs"></div>
+        <p class="pg-empty" id="srcsEmpty" hidden>Tháng này chưa có khoản thu nào.</p>
+      </section>
+    </div>
+
+    <section class="pg-card" style="margin-top:1rem" aria-labelledby="t3">
+      <h2 id="t3">6 tháng gần nhất</h2>
+      <div class="pg-months" id="months" role="img" aria-label="So sánh thu và chi 6 tháng gần nhất"></div>
+      <div class="pg-key"><span><i style="background:var(--income)"></i>Thu</span><span><i style="background:var(--spend)"></i>Chi</span></div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="auth.js"></script>
+  <script>
+    (function () {
+      "use strict";
+      var $ = function (id) { return document.getElementById(id); };
+      var db = null, uid = null;
+
+      function money(n) { return Number(n || 0).toLocaleString("vi-VN") + "đ"; }
+      function thisMonth() {
+        var d = new Date();
+        return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+      }
+      // Cộng/trừ tháng bằng chuỗi "YYYY-MM", không lệch múi giờ
+      function addMonths(ym, n) {
+        var p = ym.split("-"), idx = Number(p[0]) * 12 + (Number(p[1]) - 1) + n;
+        return Math.floor(idx / 12) + "-" + String((idx % 12) + 1).padStart(2, "0");
+      }
+      function show(text) { var m = $("msg"); m.textContent = text || ""; m.hidden = !text; }
+      function el(tag, cls, text) {
+        var e = document.createElement(tag);
+        if (cls) e.className = cls;
+        if (text !== undefined) e.textContent = text; // textContent: chữ người dùng nhập không chạy được như mã
+        return e;
+      }
+      function catName(r) {
+        var c = r.categories;
+        var n = Array.isArray(c) ? (c[0] && c[0].name) : (c && c.name);
+        return n || "Không rõ";
+      }
+      function bars(box, emptyEl, map) {
+        box.replaceChildren();
+        var keys = Object.keys(map).sort(function (a, b) { return map[b] - map[a]; });
+        var total = keys.reduce(function (s, k) { return s + map[k]; }, 0);
+        keys.forEach(function (k) {
+          var row = el("div", "pg-row");
+          var track = el("div", "pg-track");
+          var fill = el("i", "pg-fill");
+          fill.style.width = (total ? Math.round(map[k] / total * 100) : 0) + "%";
+          track.append(fill);
+          row.append(el("span", "", k), track, el("em", "", money(map[k])));
+          box.append(row);
+        });
+        emptyEl.hidden = keys.length > 0;
+      }
+
+      async function load() {
+        show("");
+        var ym = $("month").value;
+        var first = addMonths(ym, -5) + "-01";
+        var next = addMonths(ym, 1) + "-01";
+
+        var e = await db.from("expenses")
+          .select("spent_on, amount, categories(name)")
+          .eq("user_id", uid).gte("spent_on", first).lt("spent_on", next);
+        if (e.error) throw e.error;
+        var i = await db.from("incomes")
+          .select("received_on, amount, source")
+          .eq("user_id", uid).gte("received_on", first).lt("received_on", next);
+        if (i.error) throw i.error;
+
+        var inM = {}, outM = {}, byCat = {}, bySrc = {};
+        (e.data || []).forEach(function (r) {
+          var k = String(r.spent_on).slice(0, 7), a = Number(r.amount) || 0;
+          outM[k] = (outM[k] || 0) + a;
+          if (k === ym) { var n = catName(r); byCat[n] = (byCat[n] || 0) + a; }
+        });
+        (i.data || []).forEach(function (r) {
+          var k = String(r.received_on).slice(0, 7), a = Number(r.amount) || 0;
+          inM[k] = (inM[k] || 0) + a;
+          if (k === ym) bySrc[r.source] = (bySrc[r.source] || 0) + a;
+        });
+
+        var tIn = inM[ym] || 0, tOut = outM[ym] || 0, bal = tIn - tOut;
+        $("sIn").textContent = money(tIn);
+        $("sOut").textContent = money(tOut);
+        $("sBal").textContent = (bal >= 0 ? "+" : "-") + money(Math.abs(bal));
+        $("sBalCard").className = "pg-card pg-stat bal" + (bal < 0 ? " neg" : "");
+
+        bars($("cats"), $("catsEmpty"), byCat);
+        bars($("srcs"), $("srcsEmpty"), bySrc);
+
+        var list = [];
+        for (var n = 5; n >= 0; n--) list.push(addMonths(ym, -n));
+        var max = 1;
+        list.forEach(function (k) { max = Math.max(max, inM[k] || 0, outM[k] || 0); });
+        var box = $("months");
+        box.replaceChildren();
+        list.forEach(function (k) {
+          var col = el("div", "pg-m");
+          var pair = el("div", "pair");
+          var bi = el("div", "b-in"), bo = el("div", "b-out");
+          bi.style.height = Math.round((inM[k] || 0) / max * 100) + "%";
+          bo.style.height = Math.round((outM[k] || 0) / max * 100) + "%";
+          bi.title = "Thu " + money(inM[k] || 0);
+          bo.title = "Chi " + money(outM[k] || 0);
+          pair.append(bi, bo);
+          col.append(pair, el("small", "", k.slice(5) + "/" + k.slice(2, 4)));
+          box.append(col);
+        });
+      }
+
+      async function init() {
+        if (!window.Auth || !Auth.isConfigured()) {
+          show("Chưa cấu hình Supabase. Kiểm tra file web/config.js.");
+          return;
+        }
+        try {
+          db = Auth.getClient();
+          var session = await Auth.requireLogin("dang-nhap.html");
+          if (!session) return;
+          uid = session.user.id;
+          Auth.onSignedOut(function () { window.location.replace("dang-nhap.html"); });
+          $("month").value = thisMonth();
+          $("month").addEventListener("change", function () {
+            if ($("month").value) load().catch(fail);
+          });
+          await load();
+        } catch (err) { fail(err); }
+      }
+      function fail(err) { show("Không tải được dữ liệu: " + ((err && err.message) || "lỗi không rõ")); }
+      init();
+    })();
+  </script>
+<script src="nav.js"></script></body>
+</html>

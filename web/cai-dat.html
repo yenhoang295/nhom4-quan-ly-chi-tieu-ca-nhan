@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cài đặt - Chi tiêu cá nhân, Nhóm 4</title>
+  <link rel="stylesheet" href="theme.css">
+</head>
+<body>
+  <main class="pg">
+    <header class="pg-head">
+      <div>
+        <h1>Cài đặt</h1>
+        <p class="pg-sub">Thông tin tài khoản của bạn.</p>
+      </div>
+    </header>
+
+    <p id="msg" class="msg" role="status" hidden></p>
+
+    <div class="pg-grid-2">
+      <section class="pg-card" aria-labelledby="t1">
+        <h2 id="t1">Tài khoản</h2>
+        <dl class="pg-dl">
+          <dt>Email</dt><dd id="email">...</dd>
+          <dt>Tên hiển thị</dt><dd id="nameNow">...</dd>
+        </dl>
+        <form id="nameForm" novalidate style="margin-top:1.2rem">
+          <div class="pg-field">
+            <label for="fullName">Đổi tên hiển thị</label>
+            <input type="text" id="fullName" maxlength="60" autocomplete="name" aria-describedby="nameErr">
+            <p class="pg-err" id="nameErr"></p>
+          </div>
+          <button type="submit" class="pg-btn" id="nameBtn">Lưu tên</button>
+        </form>
+      </section>
+
+      <section class="pg-card" aria-labelledby="t2">
+        <h2 id="t2">Đổi mật khẩu</h2>
+        <form id="pwForm" novalidate>
+          <div class="pg-field">
+            <label for="pw1">Mật khẩu mới</label>
+            <input type="password" id="pw1" autocomplete="new-password" aria-describedby="pwErr">
+          </div>
+          <div class="pg-field">
+            <label for="pw2">Nhập lại mật khẩu mới</label>
+            <input type="password" id="pw2" autocomplete="new-password">
+            <p class="pg-err" id="pwErr"></p>
+          </div>
+          <button type="submit" class="pg-btn" id="pwBtn">Đổi mật khẩu</button>
+        </form>
+      </section>
+    </div>
+
+    <section class="pg-card" style="margin-top:1rem" aria-labelledby="t3">
+      <h2 id="t3">Đăng xuất</h2>
+      <p class="pg-sub" style="margin-bottom:1rem">Thoát khỏi tài khoản trên thiết bị này.</p>
+      <button type="button" class="pg-btn pg-btn-alt" id="logoutBtn">Đăng xuất</button>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="auth.js"></script>
+  <script>
+    (function () {
+      "use strict";
+      var $ = function (id) { return document.getElementById(id); };
+      var db = null, uid = null;
+
+      function show(text, kind) {
+        var m = $("msg");
+        m.textContent = text || "";
+        m.hidden = !text;
+        m.className = "msg " + (kind || "bad");
+      }
+      function setName(name) {
+        $("nameNow").textContent = name || "(chưa đặt)";
+        $("fullName").value = name || "";
+      }
+
+      async function onName(e) {
+        e.preventDefault();
+        $("nameErr").textContent = "";
+        var name = $("fullName").value.trim();
+        if (!name) { $("nameErr").textContent = "Nhập tên hiển thị."; $("fullName").focus(); return; }
+        var btn = $("nameBtn");
+        btn.disabled = true;
+        try {
+          var res = await db.from("profiles").update({ full_name: name }).eq("id", uid).select("id");
+          if (res.error) throw res.error;
+          if (!res.data || !res.data.length) throw new Error("Không có quyền sửa tên. Nhờ quản trị kiểm tra chính sách bảng profiles.");
+          setName(name);
+          show("Đã lưu tên hiển thị.", "good");
+        } catch (err) {
+          show("Không lưu được: " + ((err && err.message) || "lỗi không rõ"), "bad");
+        } finally {
+          btn.disabled = false;
+        }
+      }
+
+      async function onPw(e) {
+        e.preventDefault();
+        $("pwErr").textContent = "";
+        var a = $("pw1").value, b = $("pw2").value;
+        if (a.length < 6) { $("pwErr").textContent = "Mật khẩu cần ít nhất 6 ký tự."; $("pw1").focus(); return; }
+        if (a !== b) { $("pwErr").textContent = "Hai mật khẩu chưa giống nhau."; $("pw2").focus(); return; }
+        var btn = $("pwBtn");
+        btn.disabled = true;
+        try {
+          var res = await db.auth.updateUser({ password: a });
+          if (res.error) throw new Error(Auth.viError(res.error));
+          $("pwForm").reset();
+          show("Đã đổi mật khẩu.", "good");
+        } catch (err) {
+          show("Không đổi được: " + ((err && err.message) || "lỗi không rõ"), "bad");
+        } finally {
+          btn.disabled = false;
+        }
+      }
+
+      async function onLogout() {
+        try { await Auth.signOut(); } catch (e) { /* bỏ qua */ }
+        window.location.replace("dang-nhap.html");
+      }
+
+      async function init() {
+        $("nameForm").addEventListener("submit", onName);
+        $("pwForm").addEventListener("submit", onPw);
+        $("logoutBtn").addEventListener("click", onLogout);
+        if (!window.Auth || !Auth.isConfigured()) {
+          show("Chưa cấu hình Supabase. Kiểm tra file web/config.js.", "bad");
+          return;
+        }
+        try {
+          db = Auth.getClient();
+          var session = await Auth.requireLogin("dang-nhap.html");
+          if (!session) return;
+          uid = session.user.id;
+          Auth.onSignedOut(function () { window.location.replace("dang-nhap.html"); });
+          $("email").textContent = session.user.email || "";
+          var p = null;
+          try { p = await Auth.getProfile(); } catch (e) { /* bỏ qua */ }
+          setName(p && p.full_name);
+        } catch (err) {
+          show((err && err.message) || "Có lỗi xảy ra.", "bad");
+        }
+      }
+      init();
+    })();
+  </script>
+<script src="nav.js"></script></body>
+</html>
