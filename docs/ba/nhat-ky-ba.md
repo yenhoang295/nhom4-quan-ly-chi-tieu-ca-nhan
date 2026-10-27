@@ -70,3 +70,13 @@ Mẫu cho ngày mới (sao chép phần dưới, bỏ dòng này):
 * **Vướng mắc:**
 * **Dự kiến ngày mai:**
 -->
+
+### 27/10/2026
+
+* **Việc đã làm:**
+  * Đọc mã và SQL mới của nhóm: `supabase/family-1-bang.sql` (Dev A) và `FamilyReportService` kèm 5 test (Dev B). Phạm vi đã mở rộng sang đăng nhập, gia đình, thu nhập.
+  * Chạy `family-1-bang.sql` hai lần trên PostgreSQL 16 cục bộ, không lỗi. Thử 15 tình huống (tạo gia đình, mã mời sai, tham gia hai lần, thu nhập bằng 0, admin sửa hoặc xóa thu nhập của thành viên, người lạ, người chưa đăng nhập): tất cả đúng như thiết kế.
+  * Soạn `06-pham-vi-gia-dinh.md`, cập nhật `database.md`, `test-cases.md`, `01-tong-quan-du-an.md`.
+* **Sản phẩm:** Issue #55, PR #56 (chờ Dev A duyệt).
+* **Vướng mắc:** `family-1-bang.sql` đang ở nhánh `feature/46-db-gia-dinh`, chưa vào `main`; `expenses` vẫn quyền công khai (demo). BA chưa thử giao diện đăng nhập, gia đình trên Vercel.
+* **Dự kiến ngày mai:** Thử trang web trên Vercel và ghi kết quả vào `test-cases.md`; nhờ Dev A chụp ảnh Supabase và Rulesets.
